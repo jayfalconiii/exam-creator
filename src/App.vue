@@ -1,4 +1,5 @@
 <template>
+  <Toast />
   <Transition name="slide-fade" mode="out-in">
     <RouterView />
   </Transition>
@@ -8,6 +9,7 @@
 
 <script setup lang="ts">
 import '@/assets/tokens.css'
+import Toast from 'primevue/toast'
 import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 </script>

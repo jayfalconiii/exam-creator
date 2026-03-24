@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { createRouter, createWebHashHistory } from 'vue-router'
+import ToastService from 'primevue/toastservice'
 import { db } from '@/db/db'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
 import StudyView from '@/views/StudyView.vue'
@@ -27,7 +28,7 @@ function mountStudyView() {
     ],
   })
   return mount(StudyView, {
-    global: { plugins: [router] },
+    global: { plugins: [router, ToastService] },
   })
 }
 

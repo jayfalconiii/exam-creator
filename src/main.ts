@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
+import ToastService from 'primevue/toastservice'
 import App from './App.vue'
 import router from './router'
 import { useSettingsStore } from '@/stores/settings'
@@ -35,6 +36,7 @@ const OrangePreset = definePreset(Aura, {
 
   app.use(pinia)
   app.use(router)
+  app.use(ToastService)
   app.use(PrimeVue, {
     theme: {
       preset: OrangePreset,
