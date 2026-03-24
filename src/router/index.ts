@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { useSessionStore } from '@/stores/session'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -13,6 +14,15 @@ const router = createRouter({
     { path: '/stats', component: () => import('@/views/StatsView.vue') },
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
   ],
+})
+
+router.beforeEach((to) => {
+  if (to.path === '/study/session' || to.path === '/study/session/review') {
+    const sessionStore = useSessionStore()
+    if (sessionStore.status === 'idle') {
+      return '/study'
+    }
+  }
 })
 
 export default router

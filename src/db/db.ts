@@ -7,8 +7,8 @@ export class ExamDB extends Dexie {
   sessions!: Table<Session>
   settings!: Table<Setting>
 
-  constructor() {
-    super('ExamDB')
+  constructor(name = 'ExamDB') {
+    super(name)
     this.version(1).stores({
       questions: '++id, topicId, errorCount, lastSeenAt',
       topics: '++id, &topicId',
