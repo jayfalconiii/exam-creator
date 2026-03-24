@@ -40,19 +40,15 @@
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Mode</h2>
         <div class="study-view__mode-group">
-          <label
+          <button
             v-for="m in modes"
             :key="m.value"
-            class="study-view__mode-option"
-          >
-            <input
-              type="radio"
-              :data-testid="`mode-${m.value}`"
-              :value="m.value"
-              v-model="selectedMode"
-            />
-            {{ m.label }}
-          </label>
+            type="button"
+            :data-testid="`mode-${m.value}`"
+            class="study-view__mode-btn"
+            :class="{ 'study-view__mode-btn--active': selectedMode === m.value }"
+            @click="selectedMode = m.value"
+          >{{ m.label }}</button>
         </div>
       </section>
 
@@ -63,7 +59,7 @@
           v-model="questionCount"
           :min="5"
           :max="65"
-          :step="1"
+          :step="5"
           data-testid="question-count-slider"
           class="study-view__slider"
         />
@@ -71,7 +67,7 @@
 
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Feedback Mode</h2>
-        <div class="study-view__feedback-group">
+        <div class="study-view__feedback-toggle">
           <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': !isExamMode }">
             Study
           </span>
@@ -305,7 +301,6 @@ async function startSession() {
     }
   }
 
-  &__mode-option,
   &__timer-toggle {
     display: flex;
     align-items: center;
@@ -317,7 +312,29 @@ async function startSession() {
 
   &__mode-group {
     display: flex;
-    gap: 1rem;
+    gap: 0;
+  }
+
+  &__mode-btn {
+    flex: 1;
+    border: 2px solid var(--color-primary);
+    background: transparent;
+    color: var(--color-primary);
+    padding: 0.625rem 0.5rem;
+    min-height: 44px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+    &:not(:first-child) { border-left: none; }
+    &:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+
+    &--active {
+      background: var(--color-primary);
+      color: #fff;
+    }
   }
 
   &__count-value {
@@ -330,7 +347,7 @@ async function startSession() {
     width: 100%;
   }
 
-  &__feedback-group {
+  &__feedback-toggle {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -340,11 +357,12 @@ async function startSession() {
   &__feedback-label {
     font-size: 0.875rem;
     color: var(--color-text-muted);
+    font-weight: 500;
     transition: color 0.15s;
 
     &--active {
       color: var(--color-primary);
-      font-weight: 600;
+      font-weight: 700;
     }
   }
 
@@ -365,6 +383,7 @@ async function startSession() {
   &__start-btn {
     align-self: flex-start;
     min-height: 44px;
+    margin-top: 1rem;
   }
 }
 
