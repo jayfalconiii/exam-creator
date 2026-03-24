@@ -27,7 +27,16 @@
       </div>
     </section>
 
-    <section class="topic-detail-view__history">
+    <EmptyState
+      v-if="totalQuestions === 0"
+      icon="🧩"
+      heading="No questions yet"
+      description="Generate questions for this topic to start studying."
+      cta-label="Go to Study"
+      @cta="router.push('/study')"
+    />
+
+    <section v-else class="topic-detail-view__history">
       <h2 class="topic-detail-view__history-title">Session History</h2>
       <p v-if="sessionHistory.length === 0" class="topic-detail-view__empty">No sessions yet.</p>
       <ul v-else class="topic-detail-view__history-list">
@@ -50,6 +59,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '@/db/db'
 import { effectiveScore } from '@/composables/useSpacedRepetition'
+import EmptyState from '@/components/EmptyState.vue'
 import type { Topic, Session } from '@/types'
 
 const route = useRoute()

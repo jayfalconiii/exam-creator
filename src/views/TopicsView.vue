@@ -1,13 +1,22 @@
 <template>
   <main class="topics-view">
     <h1 class="topics-view__title">Topics</h1>
-    <HeatmapGrid :topics="store.topicsWithEffectiveScore" />
+    <EmptyState
+      v-if="store.topicsWithEffectiveScore.length === 0"
+      icon="📚"
+      heading="No topics yet"
+      description="Your topics will appear here once they've been seeded."
+      cta-label="Refresh"
+      @cta="store.refreshTopics()"
+    />
+    <HeatmapGrid v-else :topics="store.topicsWithEffectiveScore" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import HeatmapGrid from '@/components/HeatmapGrid.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { useTopicsStore } from '@/stores/topics'
 
 const store = useTopicsStore()
