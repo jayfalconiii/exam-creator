@@ -24,6 +24,13 @@ defineProps<{ topic: TopicWithScore }>()
   font-weight: 600;
   min-height: 72px;
   background-color: #9e9e9e;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
 
   &[data-color='green'] {
     background-color: #2e7d32;

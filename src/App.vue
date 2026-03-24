@@ -1,5 +1,7 @@
 <template>
-  <RouterView />
+  <Transition name="slide-fade" mode="out-in">
+    <RouterView />
+  </Transition>
   <BottomNav />
   <InstallBanner />
 </template>
@@ -19,5 +21,40 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   padding-bottom: 56px;
+}
+
+/* Route slide-fade transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+/* Button micro-interactions */
+button:active,
+.p-button:active {
+  transform: scale(0.97);
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .slide-fade-enter-active,
+  .slide-fade-leave-active {
+    transition: none;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
