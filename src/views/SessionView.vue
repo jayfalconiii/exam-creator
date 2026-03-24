@@ -6,7 +6,8 @@
     </header>
 
     <section v-if="sessionStore.status === 'loading'" class="session-view__loading">
-      <p>Loading questions…</p>
+      <span class="session-view__spinner" aria-label="Generating questions…"></span>
+      <p class="session-view__loading-text">Generating questions…</p>
     </section>
 
     <section v-else-if="sessionStore.status === 'active' && currentQuestion" class="session-view__body">
@@ -141,9 +142,28 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
   }
 
   &__loading {
-    text-align: center;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
     color: #6b7280;
+  }
+
+  &__spinner {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  &__loading-text {
+    font-size: 1rem;
+    color: inherit;
   }
 
   &__body {
@@ -170,5 +190,9 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
       background: #4f46e5;
     }
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
