@@ -11,6 +11,13 @@
 </script>
 
 <style scoped>
+@keyframes nav-spring {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.2); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -36,6 +43,7 @@
   &.router-link-active {
     color: #1a73e8;
     font-weight: 600;
+    animation: nav-spring 0.3s ease;
   }
 }
 </style>
