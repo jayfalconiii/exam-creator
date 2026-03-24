@@ -2,7 +2,26 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
 import { ExamDB } from '@/db/db'
-import type { Question } from '@/types'
+import type { Question, Topic, SessionConfig } from '@/types'
+import type { AnswerRecord } from '@/composables/useSession'
+
+function makeTopic(overrides: Partial<Topic> & { topicId: string }): Omit<Topic, 'id'> {
+  return {
+    name: overrides.topicId.toUpperCase(),
+    rawScore: 50,
+    lastReviewedAt: null,
+    totalSessions: 0,
+    ...overrides,
+  }
+}
+
+function makeConfig(topicIds: string[]): SessionConfig {
+  return { topicIds, mode: 'mixed', questionCount: 10, feedbackMode: 'study', timerEnabled: false, timerSeconds: 0 }
+}
+
+function makeAnswer(correct: boolean): AnswerRecord {
+  return { questionId: 1, selectedIndex: 0, timeMs: 0, correct }
+}
 
 let db: ExamDB
 
@@ -176,5 +195,66 @@ describe('buildQuestionQueue', () => {
 
     expect(queue.length).toBe(2)
     expect(queue.every((q) => ['s3', 'vpc'].includes(q.topicId))).toBe(true)
+  })
+})
+
+describe('completeSession', () => {
+  it('updates rawScore and lastReviewedAt for touched topics', async () => {
+    await db.topics.bulkAdd([makeTopic({ topicId: 'ec2', rawScore: 50 })])
+    const { completeSession } = await import('@/composables/useSession')
+    const answers = [makeAnswer(true), makeAnswer(true)]
+    await completeSession(makeConfig(['ec2']), answers, Date.now() - 1000, db)
+    const topic = await db.topics.where('topicId').equals('ec2').first()
+    expect(topic?.rawScore).toBeGreaterThan(50)
+    expect(topic?.lastReviewedAt).not.toBeNull()
+  })
+
+  it('100% correct session raises rawScore', async () => {
+    await db.topics.bulkAdd([makeTopic({ topicId: 'ec2', rawScore: 50 })])
+    const { completeSession } = await import('@/composables/useSession')
+    const answers = [makeAnswer(true), makeAnswer(true), makeAnswer(true)]
+    await completeSession(makeConfig(['ec2']), answers, Date.now() - 1000, db)
+    const topic = await db.topics.where('topicId').equals('ec2').first()
+    expect(topic!.rawScore).toBeGreaterThan(50)
+  })
+
+  it('0% correct session lowers rawScore', async () => {
+    await db.topics.bulkAdd([makeTopic({ topicId: 'ec2', rawScore: 80 })])
+    const { completeSession } = await import('@/composables/useSession')
+    const answers = [makeAnswer(false), makeAnswer(false), makeAnswer(false)]
+    await completeSession(makeConfig(['ec2']), answers, Date.now() - 1000, db)
+    const topic = await db.topics.where('topicId').equals('ec2').first()
+    expect(topic!.rawScore).toBeLessThan(80)
+  })
+
+  it('topics not in session are not modified', async () => {
+    const beforeTs = Date.now()
+    await db.topics.bulkAdd([
+      makeTopic({ topicId: 'ec2', rawScore: 50 }),
+      makeTopic({ topicId: 's3', rawScore: 60 }),
+    ])
+    const { completeSession } = await import('@/composables/useSession')
+    await completeSession(makeConfig(['ec2']), [makeAnswer(true)], Date.now() - 1000, db)
+    const s3 = await db.topics.where('topicId').equals('s3').first()
+    expect(s3?.rawScore).toBe(60)
+    expect(s3?.lastReviewedAt).toBeNull()
+  })
+
+  it('increments totalSessions for touched topics', async () => {
+    await db.topics.bulkAdd([makeTopic({ topicId: 'ec2', rawScore: 50, totalSessions: 2 })])
+    const { completeSession } = await import('@/composables/useSession')
+    await completeSession(makeConfig(['ec2']), [makeAnswer(true)], Date.now() - 1000, db)
+    const topic = await db.topics.where('topicId').equals('ec2').first()
+    expect(topic?.totalSessions).toBe(3)
+  })
+
+  it('persists session record to db.sessions', async () => {
+    await db.topics.bulkAdd([makeTopic({ topicId: 'ec2' })])
+    const { completeSession } = await import('@/composables/useSession')
+    await completeSession(makeConfig(['ec2']), [makeAnswer(true), makeAnswer(false)], Date.now() - 1000, db)
+    const sessions = await db.sessions.toArray()
+    expect(sessions.length).toBe(1)
+    expect(sessions[0].correctCount).toBe(1)
+    expect(sessions[0].totalQuestions).toBe(2)
   })
 })

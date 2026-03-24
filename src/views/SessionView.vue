@@ -43,12 +43,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
+import { useTopicsStore } from '@/stores/topics'
 import { buildQuestionQueue, submitAnswer, completeSession } from '@/composables/useSession'
 import QuestionCard from '@/components/QuestionCard.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
+const topicsStore = useTopicsStore()
 
 const currentAnswer = ref<number | null>(null)
 const feedbackDismissed = ref(false)
@@ -112,6 +114,7 @@ async function handleAdvance() {
 async function finish() {
   if (timerInterval) clearInterval(timerInterval)
   await completeSession(config.value!, sessionStore.answers, sessionStore.startedAt)
+  await topicsStore.refreshTopics()
   sessionStore.finishSession()
   router.replace('/study/session/review')
 }
