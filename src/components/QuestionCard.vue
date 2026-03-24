@@ -47,6 +47,24 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
+@keyframes pulse-correct {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake-incorrect {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
 .question-card {
   display: flex;
   flex-direction: column;
@@ -73,13 +91,15 @@ const emit = defineEmits<{
     transition: background 0.15s;
 
     &--correct {
-      border-color: #22c55e;
-      background: #f0fdf4;
+      border-color: var(--color-success);
+      background: var(--color-success-light);
+      animation: pulse-correct 0.4s ease-in-out;
     }
 
     &--incorrect {
-      border-color: #ef4444;
-      background: #fef2f2;
+      border-color: var(--color-danger);
+      background: var(--color-danger-light);
+      animation: shake-incorrect 0.4s ease-in-out;
     }
   }
 
