@@ -1,9 +1,12 @@
 <template>
   <main class="session-review-view">
-    <header class="session-review-view__header">
+    <header class="session-review-view__header" :class="{ 'session-review-view__header--high-score': isHighScore }">
       <h1 class="session-review-view__title">Session Review</h1>
       <p class="session-review-view__score">
         {{ correctCount }} / {{ sessionStore.queue.length }} correct
+      </p>
+      <p v-if="isHighScore" class="session-review-view__celebration">
+        ★ Great job! You scored {{ scorePercent }}%!
       </p>
     </header>
 
@@ -53,6 +56,12 @@ const sessionStore = useSessionStore()
 const topicsStore = useTopicsStore()
 
 const correctCount = computed(() => sessionStore.answers.filter((a) => a.correct).length)
+const scorePercent = computed(() =>
+  sessionStore.queue.length > 0
+    ? Math.round((correctCount.value / sessionStore.queue.length) * 100)
+    : 0
+)
+const isHighScore = computed(() => scorePercent.value >= 80)
 
 function getSelectedIndex(questionIndex: number): number | null {
   return sessionStore.answers[questionIndex]?.selectedIndex ?? null
@@ -82,6 +91,14 @@ async function done() {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+
+    &--high-score {
+      border: 2px solid var(--color-success);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      background: var(--color-success-light);
+      box-shadow: 0 0 16px 0 rgb(34 197 94 / 0.25);
+    }
   }
 
   &__title {
@@ -92,6 +109,13 @@ async function done() {
   &__score {
     font-size: 1.1rem;
     color: #6b7280;
+  }
+
+  &__celebration {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #15803d;
+    margin-top: 0.25rem;
   }
 
   &__list {
