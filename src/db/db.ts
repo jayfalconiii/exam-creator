@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import type { Question, Topic, Session, Setting } from '@/types'
 
-class ExamDB extends Dexie {
+export class ExamDB extends Dexie {
   questions!: Table<Question>
   topics!: Table<Topic>
   sessions!: Table<Session>
