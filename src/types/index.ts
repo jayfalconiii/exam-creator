@@ -1,7 +1,16 @@
 export type QuestionSource = 'seed' | 'generated'
 export type SessionMode = 'review' | 'difficult' | 'new' | 'mixed'
 export type FeedbackMode = 'study' | 'exam'
-export type SettingKey = 'apiKey' | 'defaultQuestionCount' | 'defaultMode'
+export type SettingKey =
+  | 'apiKey'
+  | 'defaultQuestionCount'
+  | 'defaultMode'
+  | 'session_topicIds'
+  | 'session_mode'
+  | 'session_questionCount'
+  | 'session_feedbackMode'
+  | 'session_timerEnabled'
+  | 'session_timerSeconds'
 
 export interface Question {
   id?: number
