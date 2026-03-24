@@ -2,7 +2,15 @@
   <main class="study-view">
     <h1 class="study-view__title">Configure Session</h1>
 
-    <form class="study-view__form" @submit.prevent="startSession">
+    <div v-if="isGenerating" class="question-skeleton" data-testid="question-skeleton">
+      <Skeleton height="2rem" class="question-skeleton__title" />
+      <Skeleton height="3rem" class="question-skeleton__option" />
+      <Skeleton height="3rem" class="question-skeleton__option" />
+      <Skeleton height="3rem" class="question-skeleton__option" />
+      <Skeleton height="3rem" class="question-skeleton__option" />
+    </div>
+
+    <form v-else class="study-view__form" @submit.prevent="startSession">
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Topics</h2>
         <label class="study-view__topic-item">
@@ -118,6 +126,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import Skeleton from 'primevue/skeleton'
+import { useToast } from 'primevue/usetoast'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
@@ -130,7 +140,9 @@ const router = useRouter()
 const sessionStore = useSessionStore()
 const settingsStore = useSettingsStore()
 const { isOnline } = useNetwork()
+const toast = useToast()
 
+const isGenerating = ref(false)
 const selectedTopics = ref<string[]>([])
 const selectedMode = ref<SessionMode>('mixed')
 const questionCount = ref(10)
@@ -193,14 +205,33 @@ async function startSession() {
     (config.mode === 'new' || config.mode === 'mixed')
 
   if (shouldGenerate) {
+    isGenerating.value = true
     sessionStore.status = 'loading'
-    await useQuestionGenerator({
-      topicIds: config.topicIds,
-      count: config.questionCount,
-      apiKey: settingsStore.apiKey,
-      db,
-    })
-    sessionStore.status = 'configured'
+    try {
+      await useQuestionGenerator({
+        topicIds: config.topicIds,
+        count: config.questionCount,
+        apiKey: settingsStore.apiKey,
+        db,
+      })
+      toast.add({
+        severity: 'success',
+        summary: 'Questions Ready',
+        detail: 'New questions generated successfully.',
+        life: 3000,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate questions.'
+      toast.add({
+        severity: 'error',
+        summary: 'Generation Failed',
+        detail: message,
+        life: 5000,
+      })
+    } finally {
+      isGenerating.value = false
+      sessionStore.status = 'configured'
+    }
   }
 
   router.push('/study/session')
@@ -257,6 +288,21 @@ async function startSession() {
       opacity: 0.5;
       cursor: not-allowed;
     }
+  }
+}
+
+.question-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__title {
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &__option {
+    border-radius: 0.5rem;
   }
 }
 </style>

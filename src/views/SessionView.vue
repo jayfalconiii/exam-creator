@@ -5,9 +5,14 @@
       <p v-if="config?.timerEnabled" class="session-view__timer">{{ formattedTime }}</p>
     </header>
 
-    <section v-if="sessionStore.status === 'loading'" class="session-view__loading">
-      <span class="session-view__spinner" aria-label="Generating questions…"></span>
-      <p class="session-view__loading-text">Generating questions…</p>
+    <section v-if="sessionStore.status === 'loading'" class="session-view__loading" data-testid="question-skeleton">
+      <div class="question-skeleton">
+        <Skeleton height="2rem" class="question-skeleton__title" />
+        <Skeleton height="3rem" class="question-skeleton__option" />
+        <Skeleton height="3rem" class="question-skeleton__option" />
+        <Skeleton height="3rem" class="question-skeleton__option" />
+        <Skeleton height="3rem" class="question-skeleton__option" />
+      </div>
     </section>
 
     <section v-else-if="sessionStore.status === 'active' && currentQuestion" class="session-view__body">
@@ -42,6 +47,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import Skeleton from 'primevue/skeleton'
 import { useSessionStore } from '@/stores/session'
 import { useTopicsStore } from '@/stores/topics'
 import { buildQuestionQueue, submitAnswer, completeSession } from '@/composables/useSession'
@@ -145,28 +151,7 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
   }
 
   &__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 3rem 1rem;
-    color: #6b7280;
-  }
-
-  &__spinner {
-    display: block;
-    width: 2.5rem;
-    height: 2.5rem;
-    border: 3px solid currentColor;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.75s linear infinite;
-  }
-
-  &__loading-text {
-    font-size: 1rem;
-    color: inherit;
+    padding: 1rem 0;
   }
 
   &__body {
@@ -195,7 +180,18 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
   }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.question-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__title {
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &__option {
+    border-radius: 0.5rem;
+  }
 }
 </style>
