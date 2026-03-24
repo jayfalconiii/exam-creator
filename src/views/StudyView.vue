@@ -13,28 +13,28 @@
     <form v-else class="study-view__form" @submit.prevent="startSession">
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Topics</h2>
-        <label class="study-view__topic-item">
-          <input
-            type="checkbox"
+        <div class="study-view__chips">
+          <button
+            type="button"
             data-testid="topic-all"
-            :checked="allSelected"
-            @change="toggleAll"
-          />
-          All
-        </label>
-        <label
-          v-for="topic in TOPIC_DEFINITIONS"
-          :key="topic.topicId"
-          class="study-view__topic-item"
-        >
-          <input
-            type="checkbox"
+            class="study-view__chip"
+            :class="{ 'study-view__chip--selected': allSelected }"
+            @click="toggleAll"
+          >
+            All
+          </button>
+          <button
+            v-for="topic in TOPIC_DEFINITIONS"
+            :key="topic.topicId"
+            type="button"
             :data-testid="`topic-${topic.topicId}`"
-            :value="topic.topicId"
-            v-model="selectedTopics"
-          />
-          {{ topic.name }}
-        </label>
+            class="study-view__chip"
+            :class="{ 'study-view__chip--selected': selectedTopics.includes(topic.topicId) }"
+            @click="toggleTopic(topic.topicId)"
+          >
+            {{ topic.name }}
+          </button>
+        </div>
       </section>
 
       <section class="study-view__section">
@@ -58,37 +58,31 @@
 
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Question Count</h2>
-        <input
-          type="number"
-          data-testid="question-count"
-          min="5"
-          max="65"
-          v-model.number="questionCount"
-          class="study-view__number-input"
+        <span class="study-view__count-value" data-testid="question-count">{{ questionCount }}</span>
+        <Slider
+          v-model="questionCount"
+          :min="5"
+          :max="65"
+          :step="1"
+          data-testid="question-count-slider"
+          class="study-view__slider"
         />
       </section>
 
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Feedback Mode</h2>
         <div class="study-view__feedback-group">
-          <label class="study-view__feedback-option">
-            <input
-              type="radio"
-              data-testid="feedback-study"
-              value="study"
-              v-model="feedbackMode"
-            />
+          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': !isExamMode }">
             Study
-          </label>
-          <label class="study-view__feedback-option">
-            <input
-              type="radio"
-              data-testid="feedback-exam"
-              value="exam"
-              v-model="feedbackMode"
-            />
+          </span>
+          <ToggleSwitch
+            v-model="isExamMode"
+            data-testid="feedback-toggle"
+            class="study-view__toggle"
+          />
+          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': isExamMode }">
             Exam
-          </label>
+          </span>
         </div>
       </section>
 
@@ -128,6 +122,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
+import Slider from 'primevue/slider'
+import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
@@ -148,9 +144,11 @@ const isGenerating = ref(false)
 const selectedTopics = ref<string[]>([])
 const selectedMode = ref<SessionMode>('mixed')
 const questionCount = ref(10)
-const feedbackMode = ref<FeedbackMode>('study')
+const isExamMode = ref(false)
 const timerEnabled = ref(false)
 const timerSeconds = ref(90)
+
+const feedbackMode = computed<FeedbackMode>(() => (isExamMode.value ? 'exam' : 'study'))
 
 const allTopicIds = TOPIC_DEFINITIONS.map((t) => t.topicId)
 
@@ -163,9 +161,17 @@ const modes = [
   { value: 'mixed' as SessionMode, label: 'Mixed' },
 ]
 
-function toggleAll(e: Event) {
-  const checked = (e.target as HTMLInputElement).checked
-  selectedTopics.value = checked ? [...allTopicIds] : []
+function toggleAll() {
+  selectedTopics.value = allSelected.value ? [] : [...allTopicIds]
+}
+
+function toggleTopic(topicId: string) {
+  const idx = selectedTopics.value.indexOf(topicId)
+  if (idx === -1) {
+    selectedTopics.value = [...selectedTopics.value, topicId]
+  } else {
+    selectedTopics.value = selectedTopics.value.filter((id) => id !== topicId)
+  }
 }
 
 onMounted(async () => {
@@ -174,7 +180,7 @@ onMounted(async () => {
     if (row.key === 'session_topicIds') selectedTopics.value = JSON.parse(row.value)
     if (row.key === 'session_mode') selectedMode.value = row.value as SessionMode
     if (row.key === 'session_questionCount') questionCount.value = Number(row.value)
-    if (row.key === 'session_feedbackMode') feedbackMode.value = row.value as FeedbackMode
+    if (row.key === 'session_feedbackMode') isExamMode.value = row.value === 'exam'
     if (row.key === 'session_timerEnabled') timerEnabled.value = row.value === 'true'
     if (row.key === 'session_timerSeconds') timerSeconds.value = Number(row.value)
   }
@@ -268,9 +274,38 @@ async function startSession() {
     color: var(--color-text);
   }
 
-  &__topic-item,
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-primary);
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &--selected {
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    &:hover:not(&--selected) {
+      background: var(--color-primary-50);
+    }
+  }
+
   &__mode-option,
-  &__feedback-option,
   &__timer-toggle {
     display: flex;
     align-items: center;
@@ -280,10 +315,37 @@ async function startSession() {
     color: var(--color-text);
   }
 
-  &__mode-group,
-  &__feedback-group {
+  &__mode-group {
     display: flex;
     gap: 1rem;
+  }
+
+  &__count-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  &__slider {
+    width: 100%;
+  }
+
+  &__feedback-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+  }
+
+  &__feedback-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    transition: color 0.15s;
+
+    &--active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
   }
 
   &__number-input {

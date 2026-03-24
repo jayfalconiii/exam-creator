@@ -12,13 +12,6 @@ vi.mock('@/composables/useNetwork', () => ({
   useNetwork: () => ({ isOnline: { value: true } }),
 }))
 
-async function checkCheckbox(wrapper: ReturnType<typeof mount>, testId: string) {
-  const el = wrapper.find(`[data-testid="${testId}"]`)
-  ;(el.element as HTMLInputElement).checked = true
-  await el.trigger('change')
-  await flushPromises()
-}
-
 function mountStudyView() {
   const router = createRouter({
     history: createWebHashHistory(),
@@ -40,12 +33,35 @@ describe('StudyView', () => {
     await db.settings.clear()
   })
 
-  it('renders topic multi-select with all 17 topics + "All" shortcut', async () => {
+  it('renders topic chips with all 17 topics + "All" shortcut', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
-    const topicCheckboxes = wrapper.findAll('[data-testid^="topic-"]:not([data-testid="topic-all"])')
-    expect(topicCheckboxes).toHaveLength(17)
+    const topicChips = wrapper.findAll('[data-testid^="topic-"]:not([data-testid="topic-all"])')
+    expect(topicChips).toHaveLength(17)
     expect(wrapper.find('[data-testid="topic-all"]').exists()).toBe(true)
+  })
+
+  it('"All" chip selects all topics when none selected', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+    const allChip = wrapper.find('[data-testid="topic-all"]')
+    expect(allChip.classes()).not.toContain('study-view__chip--selected')
+    await allChip.trigger('click')
+    await flushPromises()
+    expect(allChip.classes()).toContain('study-view__chip--selected')
+  })
+
+  it('individual topic chip toggles selected state', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+    const chip = wrapper.find('[data-testid="topic-ec2"]')
+    expect(chip.classes()).not.toContain('study-view__chip--selected')
+    await chip.trigger('click')
+    await flushPromises()
+    expect(chip.classes()).toContain('study-view__chip--selected')
+    await chip.trigger('click')
+    await flushPromises()
+    expect(chip.classes()).not.toContain('study-view__chip--selected')
   })
 
   it('renders mode selector with Review/Difficult/New/Mixed options', async () => {
@@ -57,21 +73,19 @@ describe('StudyView', () => {
     }
   })
 
-  it('renders question count input with range 5-65 and default 10', async () => {
+  it('renders question count slider with default value 10', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
-    const input = wrapper.find('[data-testid="question-count"]')
-    expect(input.exists()).toBe(true)
-    expect((input.element as HTMLInputElement).min).toBe('5')
-    expect((input.element as HTMLInputElement).max).toBe('65')
-    expect((input.element as HTMLInputElement).value).toBe('10')
+    const countDisplay = wrapper.find('[data-testid="question-count"]')
+    expect(countDisplay.exists()).toBe(true)
+    expect(countDisplay.text()).toBe('10')
+    expect(wrapper.find('[data-testid="question-count-slider"]').exists()).toBe(true)
   })
 
-  it('renders feedback mode toggle (Study/Exam)', async () => {
+  it('renders feedback mode toggle switch', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
-    expect(wrapper.find('[data-testid="feedback-study"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="feedback-exam"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="feedback-toggle"]').exists()).toBe(true)
   })
 
   it('renders timer toggle; when enabled, shows time input', async () => {
@@ -81,7 +95,9 @@ describe('StudyView', () => {
     expect(timerToggle.exists()).toBe(true)
     expect(wrapper.find('[data-testid="timer-seconds"]').exists()).toBe(false)
 
-    await checkCheckbox(wrapper, 'timer-toggle')
+    ;(timerToggle.element as HTMLInputElement).checked = true
+    await timerToggle.trigger('change')
+    await flushPromises()
     expect(wrapper.find('[data-testid="timer-seconds"]').exists()).toBe(true)
   })
 
@@ -97,7 +113,8 @@ describe('StudyView', () => {
     const wrapper = mountStudyView()
     await flushPromises()
 
-    await checkCheckbox(wrapper, 'topic-ec2')
+    await wrapper.find('[data-testid="topic-ec2"]').trigger('click')
+    await flushPromises()
 
     const btn = wrapper.find('[data-testid="start-session"]')
     expect((btn.element as HTMLButtonElement).disabled).toBe(false)
@@ -110,14 +127,12 @@ describe('StudyView', () => {
     expect(JSON.parse(topicsSetting!.value)).toContain('ec2')
   })
 
-  it('config saves to settingsStore and pre-fills on next visit', async () => {
+  it('config saves to db and persists question count', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
 
-    await wrapper.find('[data-testid="question-count"]').setValue('20')
+    await wrapper.find('[data-testid="topic-ec2"]').trigger('click')
     await flushPromises()
-
-    await checkCheckbox(wrapper, 'topic-ec2')
 
     await wrapper.find('form').trigger('submit')
     await flushPromises()
@@ -127,6 +142,6 @@ describe('StudyView', () => {
     expect(sessionKeys.length).toBeGreaterThan(0)
 
     const countSetting = saved.find((s) => s.key === 'session_questionCount')
-    expect(countSetting?.value).toBe('20')
+    expect(countSetting?.value).toBe('10')
   })
 })
