@@ -31,8 +31,9 @@ onMounted(() => {
   padding-bottom: 4rem;
 
   .topics-view__title {
-    padding: 1rem;
+    padding: var(--space-4);
     margin: 0;
+    color: var(--color-text);
   }
 }
 </style>

@@ -73,6 +73,7 @@ const emit = defineEmits<{
   &__text {
     font-size: 1.1rem;
     font-weight: 500;
+    color: var(--color-text);
   }
 
   &__options {
@@ -85,10 +86,11 @@ const emit = defineEmits<{
   }
 
   &__option {
-    border: 1px solid #ccc;
-    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     padding: 0.75rem 1rem;
     transition: background 0.15s;
+    min-height: 44px;
 
     &--correct {
       border-color: var(--color-success);
@@ -108,6 +110,7 @@ const emit = defineEmits<{
     align-items: center;
     gap: 0.75rem;
     cursor: pointer;
+    color: var(--color-text);
   }
 
   &__radio {
@@ -115,12 +118,12 @@ const emit = defineEmits<{
   }
 
   &__explanation {
-    background: #f8fafc;
-    border-left: 3px solid #6366f1;
+    background: var(--color-bg-subtle);
+    border-left: 3px solid var(--color-primary);
     padding: 0.75rem 1rem;
-    border-radius: 0 0.5rem 0.5rem 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
     font-size: 0.9rem;
-    color: #374151;
+    color: var(--color-text);
   }
 }
 </style>

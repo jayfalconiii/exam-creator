@@ -27,8 +27,8 @@
   left: 0;
   right: 0;
   height: 56px;
-  background: #fff;
-  border-top: 1px solid #e0e0e0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
 }
 
 .bottom-nav__tab {
@@ -36,13 +36,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
   text-decoration: none;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
+  font-weight: 500;
 
   &.router-link-active {
-    color: #1a73e8;
-    font-weight: 600;
+    color: var(--color-primary);
+    font-weight: 700;
+    border-top: 3px solid var(--color-primary);
     animation: nav-spring 0.3s ease;
   }
 }

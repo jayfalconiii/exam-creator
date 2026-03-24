@@ -8,7 +8,7 @@
       <h2 class="settings-view__section-title">API Key</h2>
       <div class="settings-view__field">
         <label for="api-key-input">Anthropic API Key</label>
-        <input
+        <InputText
           id="api-key-input"
           v-model="apiKeyInput"
           type="password"
@@ -17,13 +17,12 @@
           class="settings-view__input"
         />
       </div>
-      <button
+      <Button
         data-testid="save-api-key-btn"
+        label="Save API Key"
         class="settings-view__btn"
         @click="handleSaveApiKey"
-      >
-        Save API Key
-      </button>
+      />
       <p v-if="apiKeySaved" data-testid="api-key-saved-msg" class="settings-view__saved-msg">
         API key saved.
       </p>
@@ -33,12 +32,10 @@
       <h2 class="settings-view__section-title">Session Defaults</h2>
       <div class="settings-view__field">
         <label for="question-count-input">Default Question Count</label>
-        <input
+        <InputText
           id="question-count-input"
-          v-model.number="questionCountInput"
+          v-model="questionCountInputStr"
           type="number"
-          min="5"
-          max="65"
           data-testid="question-count-input"
           class="settings-view__input"
         />
@@ -57,13 +54,12 @@
           <option value="new">New</option>
         </select>
       </div>
-      <button
+      <Button
         data-testid="save-defaults-btn"
+        label="Save Defaults"
         class="settings-view__btn"
         @click="handleSaveDefaults"
-      >
-        Save Defaults
-      </button>
+      />
       <p v-if="defaultsSaved" data-testid="defaults-saved-msg" class="settings-view__saved-msg">
         Defaults saved.
       </p>
@@ -72,7 +68,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 import { useSettingsStore } from '@/stores/settings'
 import type { SessionMode } from '@/types'
 
@@ -81,6 +79,10 @@ const store = useSettingsStore()
 const apiKeyInput = ref('')
 const apiKeySaved = ref(false)
 const questionCountInput = ref(store.defaultQuestionCount)
+const questionCountInputStr = computed({
+  get: () => String(questionCountInput.value),
+  set: (v) => { questionCountInput.value = Number(v) },
+})
 const modeInput = ref<SessionMode>(store.defaultMode)
 const defaultsSaved = ref(false)
 
@@ -104,10 +106,11 @@ async function handleSaveDefaults() {
 
 <style scoped>
 .settings-view {
-  padding: 1rem;
+  padding: var(--space-4);
 
   &__header {
     margin-bottom: 1.5rem;
+    color: var(--color-text);
   }
 
   &__section {
@@ -116,6 +119,7 @@ async function handleSaveDefaults() {
     &-title {
       margin-bottom: 1rem;
       font-size: 1.1rem;
+      color: var(--color-text);
     }
   }
 
@@ -124,25 +128,39 @@ async function handleSaveDefaults() {
     flex-direction: column;
     gap: 0.25rem;
     margin-bottom: 0.75rem;
+
+    label {
+      color: var(--color-text-muted);
+      font-size: 0.875rem;
+    }
   }
 
-  &__input,
+  &__input {
+    width: 100%;
+  }
+
   &__select {
     padding: 0.5rem;
     font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    background: var(--color-surface);
+    min-height: 44px;
+
+    &:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
   }
 
   &__btn {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    cursor: pointer;
+    min-height: 44px;
   }
 
   &__saved-msg {
     margin-top: 0.5rem;
-    color: green;
+    color: var(--color-success);
     font-size: 0.9rem;
   }
 }

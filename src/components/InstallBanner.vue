@@ -1,13 +1,14 @@
 <template>
   <div v-if="visible" class="install-banner">
     <p class="install-banner__text">Add to Home Screen for the best experience</p>
-    <button class="install-banner__install" @click="install">Install</button>
-    <button class="install-banner__dismiss" @click="dismiss">Dismiss</button>
+    <Button label="Install" size="small" @click="install" class="install-banner__install" />
+    <Button label="Dismiss" size="small" variant="outlined" @click="dismiss" class="install-banner__dismiss" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import Button from 'primevue/button'
 
 interface BeforeInstallPromptEvent extends Event {
   preventDefault(): void
@@ -53,12 +54,13 @@ onUnmounted(() => {
   bottom: 64px;
   left: 0;
   right: 0;
-  background: #1a73e8;
-  color: #fff;
-  padding: 12px 16px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-3) var(--space-4);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-lg);
 }
 
 .install-banner__text {
@@ -69,12 +71,6 @@ onUnmounted(() => {
 
 .install-banner__install,
 .install-banner__dismiss {
-  background: transparent;
-  border: 1px solid #fff;
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 </style>
