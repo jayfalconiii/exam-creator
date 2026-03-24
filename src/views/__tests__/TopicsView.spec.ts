@@ -41,4 +41,26 @@ describe('TopicsView', () => {
     await flushPromises()
     expect(wrapper.findAll('.topic-tile')).toHaveLength(17)
   })
+
+  it('shows EmptyState when topics list is empty', async () => {
+    await db.topics.clear()
+    await router.push('/topics')
+    await router.isReady()
+    const wrapper = mount(TopicsView, {
+      global: { plugins: [router, createPinia()] },
+    })
+    await flushPromises()
+    expect(wrapper.find('.empty-state').exists()).toBe(true)
+    expect(wrapper.find('.heatmap-grid').exists()).toBe(false)
+  })
+
+  it('does not show EmptyState when topics exist', async () => {
+    await router.push('/topics')
+    await router.isReady()
+    const wrapper = mount(TopicsView, {
+      global: { plugins: [router, createPinia()] },
+    })
+    await flushPromises()
+    expect(wrapper.find('.empty-state').exists()).toBe(false)
+  })
 })

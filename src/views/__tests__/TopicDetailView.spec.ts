@@ -27,6 +27,17 @@ describe('TopicDetailView', () => {
     await db.questions.clear()
     await db.sessions.clear()
     await db.topics.bulkAdd(TOPIC_DEFINITIONS.map((t) => ({ ...t })))
+    await db.questions.add({
+      topicId: 'ec2',
+      text: 'Default Q',
+      options: ['a', 'b', 'c', 'd'],
+      correctIndex: 0,
+      explanation: 'e',
+      source: 'seed',
+      errorCount: 0,
+      lastSeenAt: null,
+      createdAt: Date.now(),
+    })
   })
 
   it('shows topic name', async () => {
@@ -98,7 +109,8 @@ describe('TopicDetailView', () => {
     await flush()
     const el = wrapper.find('[data-test="total-questions"]')
     expect(el.exists()).toBe(true)
-    expect(el.text()).toContain('2')
+    // beforeEach adds 1 default ec2 question; this test adds 2 more = 3 total
+    expect(el.text()).toContain('3')
   })
 
   it('shows difficult question count (errorCount >= 2)', async () => {
@@ -209,5 +221,26 @@ describe('TopicDetailView', () => {
     })
     await flush()
     expect(router.currentRoute.value.path).toBe('/topics')
+  })
+
+  it('shows EmptyState when topic has no questions', async () => {
+    await db.questions.clear()
+    await router.push('/topics/ec2')
+    await router.isReady()
+    const wrapper = mount(TopicDetailView, {
+      global: { plugins: [router, createPinia()] },
+    })
+    await flush()
+    expect(wrapper.find('.empty-state').exists()).toBe(true)
+  })
+
+  it('does not show EmptyState when topic has questions', async () => {
+    await router.push('/topics/ec2')
+    await router.isReady()
+    const wrapper = mount(TopicDetailView, {
+      global: { plugins: [router, createPinia()] },
+    })
+    await flush()
+    expect(wrapper.find('.empty-state').exists()).toBe(false)
   })
 })
