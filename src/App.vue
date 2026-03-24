@@ -5,6 +5,7 @@
 </template>
 
 <script setup lang="ts">
+import '@/assets/tokens.css'
 import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 </script>
@@ -16,7 +17,7 @@ import InstallBanner from '@/components/InstallBanner.vue'
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   padding-bottom: 56px;
 }
 </style>
