@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto'
-import Dexie from 'dexie'
 import { ExamDB } from '@/db/db'
 import type { Question, Topic, SessionConfig } from '@/types'
 import type { AnswerRecord } from '@/composables/useSession'
@@ -228,7 +227,6 @@ describe('completeSession', () => {
   })
 
   it('topics not in session are not modified', async () => {
-    const beforeTs = Date.now()
     await db.topics.bulkAdd([
       makeTopic({ topicId: 'ec2', rawScore: 50 }),
       makeTopic({ topicId: 's3', rawScore: 60 }),
