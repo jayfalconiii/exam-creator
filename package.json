@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "@primevue/themes": "^4.5.4",
     "dexie": "^4.3.0",
     "pinia": "^3.0.4",
+    "primevue": "^4.5.4",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },
