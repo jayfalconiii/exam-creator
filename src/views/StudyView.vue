@@ -120,11 +120,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
 import { useSessionStore } from '@/stores/session'
+import { useSettingsStore } from '@/stores/settings'
+import { useNetwork } from '@/composables/useNetwork'
+import { useQuestionGenerator } from '@/composables/useQuestionGenerator'
 import { db } from '@/db/db'
 import type { SessionMode, FeedbackMode } from '@/types/index'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
+const settingsStore = useSettingsStore()
+const { isOnline } = useNetwork()
 
 const selectedTopics = ref<string[]>([])
 const selectedMode = ref<SessionMode>('mixed')
@@ -181,6 +186,23 @@ async function startSession() {
   ])
 
   sessionStore.configure(config)
+
+  const shouldGenerate =
+    isOnline.value &&
+    settingsStore.hasApiKey &&
+    (config.mode === 'new' || config.mode === 'mixed')
+
+  if (shouldGenerate) {
+    sessionStore.status = 'loading'
+    await useQuestionGenerator({
+      topicIds: config.topicIds,
+      count: config.questionCount,
+      apiKey: settingsStore.apiKey,
+      db,
+    })
+    sessionStore.status = 'configured'
+  }
+
   router.push('/study/session')
 }
 </script>
