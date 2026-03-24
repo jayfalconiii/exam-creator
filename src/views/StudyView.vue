@@ -64,6 +64,7 @@
           min="5"
           max="65"
           v-model.number="questionCount"
+          class="study-view__number-input"
         />
       </section>
 
@@ -108,17 +109,17 @@
           min="30"
           max="7200"
           v-model.number="timerSeconds"
+          class="study-view__number-input"
         />
       </section>
 
-      <button
+      <Button
         type="submit"
         data-testid="start-session"
+        label="Start Session"
         :disabled="selectedTopics.length === 0"
         class="study-view__start-btn"
-      >
-        Start Session
-      </button>
+      />
     </form>
   </main>
 </template>
@@ -128,6 +129,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
 import { useToast } from 'primevue/usetoast'
+import Button from 'primevue/button'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
@@ -240,10 +242,11 @@ async function startSession() {
 
 <style scoped>
 .study-view {
-  padding: 1rem;
+  padding: var(--space-4);
 
   &__title {
     margin-bottom: 1.5rem;
+    color: var(--color-text);
   }
 
   &__form {
@@ -262,6 +265,7 @@ async function startSession() {
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
+    color: var(--color-text);
   }
 
   &__topic-item,
@@ -272,6 +276,8 @@ async function startSession() {
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
+    min-height: 44px;
+    color: var(--color-text);
   }
 
   &__mode-group,
@@ -280,14 +286,23 @@ async function startSession() {
     gap: 1rem;
   }
 
+  &__number-input {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    background: var(--color-surface);
+
+    &:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+  }
+
   &__start-btn {
     align-self: flex-start;
-    padding: 0.75rem 1.5rem;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    min-height: 44px;
   }
 }
 

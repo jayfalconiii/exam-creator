@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
+import PrimeVue from 'primevue/config'
 import type { SessionMode } from '@/types'
 import SettingsView from '@/views/SettingsView.vue'
 import HomeView from '@/views/HomeView.vue'
@@ -49,7 +50,7 @@ describe('SettingsView', () => {
 
   it('API key field is type="password"', () => {
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     const input = wrapper.find('input[data-testid="api-key-input"]')
     expect(input.exists()).toBe(true)
     expect(input.attributes('type')).toBe('password')
@@ -58,7 +59,7 @@ describe('SettingsView', () => {
   it('API key field pre-fills from store on mount', async () => {
     mockStoreState.apiKey = 'sk-ant-prefill'
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     const input = wrapper.find('input[data-testid="api-key-input"]')
     expect((input.element as HTMLInputElement).value).toBe('sk-ant-prefill')
@@ -66,7 +67,7 @@ describe('SettingsView', () => {
 
   it('clicking save calls saveApiKey and shows confirmation', async () => {
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     await wrapper.find('input[data-testid="api-key-input"]').setValue('sk-ant-newkey')
     await wrapper.find('button[data-testid="save-api-key-btn"]').trigger('click')
@@ -79,7 +80,7 @@ describe('SettingsView', () => {
   it('saving empty input clears the key', async () => {
     mockStoreState.apiKey = 'sk-ant-existing'
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     await wrapper.find('input[data-testid="api-key-input"]').setValue('')
     await wrapper.find('button[data-testid="save-api-key-btn"]').trigger('click')
@@ -91,7 +92,7 @@ describe('SettingsView', () => {
   it('question count field pre-fills from store defaults', async () => {
     mockStoreState.defaultQuestionCount = 25
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     const input = wrapper.find('input[data-testid="question-count-input"]')
     expect((input.element as HTMLInputElement).value).toBe('25')
@@ -100,7 +101,7 @@ describe('SettingsView', () => {
   it('mode field pre-fills from store defaults', async () => {
     mockStoreState.defaultMode = 'difficult'
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     const select = wrapper.find('select[data-testid="mode-select"]')
     expect((select.element as HTMLSelectElement).value).toBe('difficult')
@@ -108,7 +109,7 @@ describe('SettingsView', () => {
 
   it('save defaults calls saveDefaults and shows confirmation', async () => {
     const router = makeRouter()
-    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia()] } })
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
     await flushPromises()
     await wrapper.find('input[data-testid="question-count-input"]').setValue('30')
     await wrapper.find('select[data-testid="mode-select"]').setValue('new')

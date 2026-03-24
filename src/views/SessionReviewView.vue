@@ -40,7 +40,7 @@
     </ol>
 
     <footer class="session-review-view__footer">
-      <button class="session-review-view__btn" @click="done">Done</button>
+      <Button label="Done" class="session-review-view__btn" @click="done" />
     </footer>
   </main>
 </template>
@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/session'
 import { useTopicsStore } from '@/stores/topics'
 
@@ -82,7 +83,7 @@ async function done() {
 
 <style scoped>
 .session-review-view {
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -104,11 +105,12 @@ async function done() {
   &__title {
     font-size: 1.5rem;
     font-weight: 700;
+    color: var(--color-text);
   }
 
   &__score {
     font-size: 1.1rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   &__celebration {
@@ -129,22 +131,24 @@ async function done() {
 
   &__item {
     padding: 1rem;
-    border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
 
     &--correct {
-      border-color: #22c55e;
-      background: #f0fdf4;
+      border-color: var(--color-success);
+      background: var(--color-success-light);
     }
 
     &--incorrect {
-      border-color: #ef4444;
-      background: #fef2f2;
+      border-color: var(--color-danger);
+      background: var(--color-danger-light);
     }
   }
 
   &__question-text {
     margin-bottom: 0.75rem;
+    color: var(--color-text);
   }
 
   &__options {
@@ -158,24 +162,25 @@ async function done() {
 
   &__option {
     padding: 0.4rem 0.75rem;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
 
     &--correct {
       font-weight: 600;
       color: #15803d;
-      background: #dcfce7;
+      background: var(--color-success-light);
     }
 
     &--selected {
       color: #b91c1c;
-      background: #fee2e2;
+      background: var(--color-danger-light);
     }
   }
 
   &__explanation {
     font-size: 0.875rem;
-    color: #374151;
-    border-left: 3px solid #6366f1;
+    color: var(--color-text);
+    border-left: 3px solid var(--color-primary);
     padding-left: 0.75rem;
   }
 
@@ -185,17 +190,7 @@ async function done() {
   }
 
   &__btn {
-    padding: 0.75rem 1.5rem;
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-
-    &:hover {
-      background: #4f46e5;
-    }
+    min-height: 44px;
   }
 }
 </style>

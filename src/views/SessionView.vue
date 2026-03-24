@@ -25,20 +25,18 @@
       />
 
       <footer class="session-view__footer" v-if="currentAnswer !== null">
-        <button
+        <Button
           v-if="isStudyMode && !feedbackDismissed"
           class="session-view__btn"
+          :label="isLast ? 'Finish' : 'Next'"
           @click="feedbackDismissed = true"
-        >
-          {{ isLast ? 'Finish' : 'Next' }}
-        </button>
-        <button
+        />
+        <Button
           v-else-if="!isStudyMode || feedbackDismissed"
           class="session-view__btn"
+          :label="isLast ? 'Finish' : 'Next'"
           @click="handleAdvance"
-        >
-          {{ isLast ? 'Finish' : 'Next' }}
-        </button>
+        />
       </footer>
     </section>
   </main>
@@ -48,6 +46,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
+import Button from 'primevue/button'
 import { useSessionStore } from '@/stores/session'
 import { useTopicsStore } from '@/stores/topics'
 import { buildQuestionQueue, submitAnswer, completeSession } from '@/composables/useSession'
@@ -133,7 +132,7 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 
 <style scoped>
 .session-view {
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -148,6 +147,7 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
     font-size: 1.25rem;
     font-weight: 600;
     text-align: right;
+    color: var(--color-text);
   }
 
   &__loading {
@@ -166,17 +166,7 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
   }
 
   &__btn {
-    padding: 0.75rem 1.5rem;
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-
-    &:hover {
-      background: #4f46e5;
-    }
+    min-height: 44px;
   }
 }
 

@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { db } from '@/db/db'
 import { effectiveScore } from '@/composables/useSpacedRepetition'
 import EmptyState from '@/components/EmptyState.vue'
@@ -107,19 +107,24 @@ onMounted(async () => {
 
 <style scoped>
 .topic-detail-view {
-  padding: 1rem;
+  padding: var(--space-4);
   padding-bottom: 4rem;
 
   .topic-detail-view__back {
     display: inline-block;
     margin-bottom: 0.5rem;
-    color: inherit;
+    color: var(--color-primary);
     text-decoration: none;
     font-size: 0.875rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
   }
 
   .topic-detail-view__title {
     margin: 0 0 1rem;
+    color: var(--color-text);
   }
 
   .topic-detail-view__scores {
@@ -133,19 +138,21 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     padding: 0.75rem;
-    border-radius: 8px;
-    background: #f5f5f5;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-subtle);
+    box-shadow: var(--shadow-sm);
   }
 
   .topic-detail-view__score-label {
     font-size: 0.75rem;
-    color: #666;
+    color: var(--color-text-muted);
   }
 
   .topic-detail-view__score-value {
     font-size: 1.5rem;
     font-weight: 700;
     margin-top: 0.25rem;
+    color: var(--color-primary);
   }
 
   .topic-detail-view__stats {
@@ -159,28 +166,31 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     padding: 0.75rem;
-    border-radius: 8px;
-    background: #f5f5f5;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-subtle);
+    box-shadow: var(--shadow-sm);
   }
 
   .topic-detail-view__stat-label {
     font-size: 0.75rem;
-    color: #666;
+    color: var(--color-text-muted);
   }
 
   .topic-detail-view__stat-value {
     font-size: 1.5rem;
     font-weight: 700;
     margin-top: 0.25rem;
+    color: var(--color-text);
   }
 
   .topic-detail-view__history-title {
     font-size: 1rem;
     margin: 0 0 0.75rem;
+    color: var(--color-text);
   }
 
   .topic-detail-view__empty {
-    color: #888;
+    color: var(--color-text-muted);
     font-size: 0.875rem;
   }
 
@@ -198,17 +208,19 @@ onMounted(async () => {
     justify-content: space-between;
     align-items: center;
     padding: 0.625rem 0.75rem;
-    border-radius: 6px;
-    background: #f5f5f5;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-subtle);
+    box-shadow: var(--shadow-sm);
   }
 
   .topic-detail-view__session-date {
     font-size: 0.875rem;
-    color: #444;
+    color: var(--color-text-muted);
   }
 
   .topic-detail-view__session-pct {
     font-weight: 600;
+    color: var(--color-text);
   }
 }
 </style>

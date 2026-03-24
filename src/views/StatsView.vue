@@ -76,7 +76,7 @@ function formatDuration(ms: number): string {
 
 <style scoped>
 .stats-view {
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -90,6 +90,7 @@ function formatDuration(ms: number): string {
   &__title {
     font-size: 1.5rem;
     font-weight: 700;
+    color: var(--color-text);
   }
 
   &__overall {
@@ -107,16 +108,17 @@ function formatDuration(ms: number): string {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   &__stat-value {
     font-size: 1.5rem;
     font-weight: 700;
+    color: var(--color-primary);
   }
 
   &__empty {
-    color: #6b7280;
+    color: var(--color-text-muted);
     text-align: center;
     padding: 3rem 1rem;
   }
@@ -132,11 +134,12 @@ function formatDuration(ms: number): string {
 
   &__row {
     padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: var(--shadow-sm);
   }
 
   &__row-primary {
@@ -154,21 +157,23 @@ function formatDuration(ms: number): string {
 
   &__date {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   &__mode {
     font-weight: 600;
     text-transform: capitalize;
+    color: var(--color-text);
   }
 
   &__score {
     font-weight: 600;
+    color: var(--color-text);
   }
 
   &__duration {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 }
 </style>

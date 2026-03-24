@@ -24,15 +24,19 @@
       <p class="home-view__empty-message">No sessions yet. Start studying to track your progress!</p>
     </section>
 
-    <button data-testid="quick-start" class="home-view__quick-start" @click="quickStart">
-      Quick Start
-    </button>
+    <Button
+      data-testid="quick-start"
+      label="Quick Start"
+      class="home-view__quick-start"
+      @click="quickStart"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import Button from 'primevue/button'
 import { db } from '@/db/db'
 import type { Session, Topic } from '@/types'
 
@@ -73,7 +77,7 @@ function quickStart() {
 
 <style scoped>
 .home-view {
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -87,69 +91,65 @@ function quickStart() {
   &__title {
     font-size: 1.5rem;
     font-weight: 700;
+    color: var(--color-text);
   }
 
   &__settings-link {
     font-size: 1.5rem;
     text-decoration: none;
-    color: inherit;
+    color: var(--color-text-muted);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   &__section-title {
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--color-text);
   }
 
   &__recent {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
   }
 
   &__score {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #6366f1;
+    color: var(--color-primary);
   }
 
   &__date {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   &__topics {
     font-size: 0.875rem;
-    color: #374151;
+    color: var(--color-text);
   }
 
   &__empty {
     padding: 2rem 1rem;
     text-align: center;
-    border: 1px dashed #e5e7eb;
-    border-radius: 0.5rem;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
   }
 
   &__empty-message {
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   &__quick-start {
     align-self: flex-start;
-    padding: 0.75rem 1.5rem;
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-
-    &:hover {
-      background: #4f46e5;
-    }
+    min-height: 44px;
   }
 }
 </style>

@@ -18,16 +18,18 @@ defineProps<{ topic: TopicWithScore }>()
   align-items: center;
   justify-content: center;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   text-decoration: none;
-  color: #fff;
+  color: var(--color-text-inverse);
   font-weight: 600;
   min-height: 72px;
-  background-color: #9e9e9e;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--color-neutral-400);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover,
-  &:focus-visible {
+  &:focus-visible,
+  &:active {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
   }
@@ -37,7 +39,7 @@ defineProps<{ topic: TopicWithScore }>()
   }
 
   &[data-color='yellow'] {
-    background-color: #f9a825;
+    background-color: var(--color-accent-600);
   }
 
   &[data-color='red'] {
@@ -45,7 +47,7 @@ defineProps<{ topic: TopicWithScore }>()
   }
 
   &[data-color='gray'] {
-    background-color: #9e9e9e;
+    background-color: var(--color-neutral-400);
   }
 
   .topic-tile__name {
@@ -56,6 +58,8 @@ defineProps<{ topic: TopicWithScore }>()
   .topic-tile__score {
     font-size: 1.25rem;
     margin-top: 0.25rem;
+    color: var(--color-primary-200);
+    font-weight: 700;
   }
 }
 </style>

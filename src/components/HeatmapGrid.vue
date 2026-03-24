@@ -15,7 +15,7 @@ defineProps<{ topics: TopicWithScore[] }>()
 .heatmap-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 </style>

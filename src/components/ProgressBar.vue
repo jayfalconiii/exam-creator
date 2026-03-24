@@ -27,21 +27,21 @@ const pct = computed(() => (props.total > 0 ? (props.current / props.total) * 10
   &__track {
     flex: 1;
     height: 0.5rem;
-    background: #e5e7eb;
-    border-radius: 9999px;
+    background: var(--color-neutral-200);
+    border-radius: var(--radius-full);
     overflow: hidden;
   }
 
   &__fill {
     height: 100%;
-    background: #6366f1;
-    border-radius: 9999px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
     transition: width 0.2s ease;
   }
 
   &__label {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
     white-space: nowrap;
   }
 }
