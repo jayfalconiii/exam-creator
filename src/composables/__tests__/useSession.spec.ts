@@ -7,6 +7,7 @@ import type { AnswerRecord } from '@/composables/useSession'
 function makeTopic(overrides: Partial<Topic> & { topicId: string }): Omit<Topic, 'id'> {
   return {
     name: overrides.topicId.toUpperCase(),
+    color: '#78716c',
     rawScore: 50,
     lastReviewedAt: null,
     totalSessions: 0,

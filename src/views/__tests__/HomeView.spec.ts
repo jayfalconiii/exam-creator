@@ -97,8 +97,8 @@ describe('HomeView', () => {
 
   it('shows topics covered in recent session', async () => {
     await db.topics.bulkAdd([
-      { topicId: 'ec2', name: 'EC2', rawScore: 80, lastReviewedAt: Date.now(), totalSessions: 1 },
-      { topicId: 's3', name: 'S3', rawScore: 70, lastReviewedAt: Date.now(), totalSessions: 1 },
+      { topicId: 'ec2', name: 'EC2', color: '#1565c0', rawScore: 80, lastReviewedAt: Date.now(), totalSessions: 1 },
+      { topicId: 's3', name: 'S3', color: '#00695c', rawScore: 70, lastReviewedAt: Date.now(), totalSessions: 1 },
     ])
     await db.sessions.add({
       startedAt: Date.now() - 60000,
