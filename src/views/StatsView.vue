@@ -249,7 +249,7 @@ function handleDelete(session: Session) {
     right: 0;
     bottom: 0;
     width: 80px;
-    background: #dc2626;
+    background: var(--color-danger, #dc2626);
     color: #fff;
     border: none;
     font-size: 0.875rem;
