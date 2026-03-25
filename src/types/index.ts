@@ -1,3 +1,4 @@
+export type ThemePreference = 'light' | 'dark' | 'auto'
 export type QuestionSource = 'seed' | 'generated'
 export type SessionMode = 'review' | 'difficult' | 'new' | 'mixed'
 export type FeedbackMode = 'study' | 'exam'
@@ -11,6 +12,7 @@ export type SettingKey =
   | 'session_feedbackMode'
   | 'session_timerEnabled'
   | 'session_timerSeconds'
+  | 'theme'
 
 export interface Question {
   id?: number
