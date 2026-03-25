@@ -77,10 +77,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
 
 const router = useRouter()
+const confirm = useConfirm()
+const toast = useToast()
 
 const questions = ref<Question[]>([])
 const topics = ref<Topic[]>([])
@@ -108,7 +112,19 @@ function handleImport() {
 }
 
 function handleDelete(question: Question) {
-  console.log('delete', question)
+  confirm.require({
+    message: 'Are you sure you want to delete this question?',
+    header: 'Delete Question',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    acceptProps: { severity: 'danger' },
+    accept: async () => {
+      await db.questions.delete(question.id)
+      questions.value = questions.value.filter((q) => q.id !== question.id)
+      toast.add({ severity: 'success', summary: 'Deleted', detail: 'Question removed.', life: 3000 })
+    },
+  })
 }
 </script>
 

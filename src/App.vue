@@ -1,5 +1,6 @@
 <template>
   <Toast />
+  <ConfirmDialog />
   <Transition name="slide-fade" mode="out-in">
     <RouterView />
   </Transition>
@@ -11,6 +12,7 @@
 import { ref, watchEffect } from 'vue'
 import '@/assets/tokens.css'
 import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import { useSettingsStore } from '@/stores/settings'
