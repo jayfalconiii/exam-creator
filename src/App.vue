@@ -43,6 +43,7 @@ body {
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  touch-action: manipulation;
 }
 
 #app {
