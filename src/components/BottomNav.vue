@@ -1,10 +1,25 @@
 <template>
   <nav class="bottom-nav">
-    <RouterLink to="/" class="bottom-nav__tab">Home</RouterLink>
-    <RouterLink to="/topics" class="bottom-nav__tab">Topics</RouterLink>
-    <RouterLink to="/study" class="bottom-nav__tab">Study</RouterLink>
-    <RouterLink to="/stats" class="bottom-nav__tab">Stats</RouterLink>
-    <RouterLink to="/library" class="bottom-nav__tab">Library</RouterLink>
+    <RouterLink to="/" class="bottom-nav__tab">
+      <i class="pi pi-home"></i>
+      <span>Home</span>
+    </RouterLink>
+    <RouterLink to="/topics" class="bottom-nav__tab">
+      <i class="pi pi-th-large"></i>
+      <span>Topics</span>
+    </RouterLink>
+    <RouterLink to="/study" class="bottom-nav__tab">
+      <i class="pi pi-pencil"></i>
+      <span>Study</span>
+    </RouterLink>
+    <RouterLink to="/stats" class="bottom-nav__tab">
+      <i class="pi pi-chart-bar"></i>
+      <span>Stats</span>
+    </RouterLink>
+    <RouterLink to="/library" class="bottom-nav__tab">
+      <i class="pi pi-book"></i>
+      <span>Library</span>
+    </RouterLink>
   </nav>
 </template>
 
@@ -36,18 +51,26 @@
 .bottom-nav__tab {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   min-height: 44px;
   text-decoration: none;
   color: var(--color-text-muted);
-  font-size: 0.875rem;
   font-weight: 500;
   border-top: 3px solid transparent;
 
+  .pi {
+    font-size: 1.25rem;
+  }
+
+  span {
+    font-size: 0.625rem;
+  }
+
   &.router-link-active {
     color: var(--color-primary);
-    font-weight: 700;
     border-top-color: var(--color-primary);
     animation: nav-spring 0.3s ease;
   }
