@@ -63,7 +63,7 @@
         <header class="library-view__card-header">
           <div class="library-view__card-badges">
             <span class="library-view__badge">{{ question.topicId }}</span>
-            <span v-if="duplicateIds.has(question.id!)" class="library-view__badge library-view__badge--duplicate">Duplicate</span>
+            <span v-if="duplicateIds.has(question.id!)" class="library-view__badge library-view__badge--duplicate">Duplicate {{ duplicateIds.get(question.id!) }}%</span>
           </div>
           <div class="library-view__card-actions">
             <Button
@@ -265,8 +265,8 @@ function diceCoefficient(a: string, b: string): number {
   return (2 * matches) / (biA.length + biB.length)
 }
 
-const duplicateIds = computed((): Set<number> => {
-  const ids = new Set<number>()
+const duplicateIds = computed((): Map<number, number> => {
+  const ids = new Map<number, number>()
   const byTopic = new Map<string, Question[]>()
   for (const q of questions.value) {
     if (!byTopic.has(q.topicId)) byTopic.set(q.topicId, [])
@@ -275,9 +275,13 @@ const duplicateIds = computed((): Set<number> => {
   for (const group of byTopic.values()) {
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
-        if (diceCoefficient(group[i].text, group[j].text) >= 0.7) {
-          ids.add(group[i].id!)
-          ids.add(group[j].id!)
+        const score = diceCoefficient(group[i].text, group[j].text)
+        if (score >= 0.7) {
+          const pct = Math.round(score * 100)
+          const idI = group[i].id!
+          const idJ = group[j].id!
+          ids.set(idI, Math.max(ids.get(idI) ?? 0, pct))
+          ids.set(idJ, Math.max(ids.get(idJ) ?? 0, pct))
         }
       }
     }
