@@ -21,9 +21,7 @@
             class="study-view__chip"
             :class="{ 'study-view__chip--selected': allSelected }"
             @click="toggleAll"
-          >
-            All
-          </Button>
+          >All</Button>
           <Button
             v-for="topic in TOPIC_DEFINITIONS"
             :key="topic.topicId"
@@ -33,25 +31,23 @@
             class="study-view__chip"
             :class="{ 'study-view__chip--selected': selectedTopics.includes(topic.topicId) }"
             @click="toggleTopic(topic.topicId)"
-          >
-            {{ topic.name }}
-          </button>
+          >{{ topic.name }}</Button>
         </div>
       </section>
 
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Mode</h2>
-        <div class="study-view__mode-group">
+        <ButtonGroup class="study-view__mode-group">
           <Button
             v-for="m in modes"
             :key="m.value"
             type="button"
+            :label="m.label"
             :data-testid="`mode-${m.value}`"
-            class="study-view__mode-btn"
-            :class="{ 'study-view__mode-btn--active': selectedMode === m.value }"
+            :outlined="selectedMode !== m.value"
             @click="selectedMode = m.value"
-          >{{ m.label }}</Button>
-        </div>
+          />
+        </ButtonGroup>
       </section>
 
       <section class="study-view__section">
@@ -70,39 +66,30 @@
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Feedback Mode</h2>
         <div class="study-view__feedback-toggle">
-          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': !isExamMode }">
-            Study
-          </span>
-          <ToggleSwitch
-            v-model="isExamMode"
-            data-testid="feedback-toggle"
-            class="study-view__toggle"
-          />
-          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': isExamMode }">
-            Exam
-          </span>
+          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': !isExamMode }">Study</span>
+          <ToggleSwitch v-model="isExamMode" data-testid="feedback-toggle" />
+          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': isExamMode }">Exam</span>
         </div>
       </section>
 
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Timer</h2>
-        <label class="study-view__timer-toggle">
-          <input
-            type="checkbox"
-            data-testid="timer-toggle"
-            v-model="timerEnabled"
+        <div class="study-view__feedback-toggle">
+          <ToggleSwitch v-model="timerEnabled" data-testid="timer-toggle" />
+          <span class="study-view__feedback-label" :class="{ 'study-view__feedback-label--active': timerEnabled }">
+            Enable timer
+          </span>
+        </div>
+        <template v-if="timerEnabled">
+          <span class="study-view__count-value" data-testid="timer-seconds">{{ formattedTimer }}</span>
+          <Slider
+            v-model="timerSeconds"
+            :min="30"
+            :max="600"
+            :step="30"
+            class="study-view__slider"
           />
-          Enable timer
-        </label>
-        <input
-          v-if="timerEnabled"
-          type="number"
-          data-testid="timer-seconds"
-          min="30"
-          max="7200"
-          v-model.number="timerSeconds"
-          class="study-view__number-input"
-        />
+        </template>
       </section>
 
       <Button
@@ -122,8 +109,9 @@ import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
 import Slider from 'primevue/slider'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
+import { useToast } from 'primevue/usetoast'
 import { TOPIC_DEFINITIONS } from '@/data/topics'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
@@ -147,10 +135,13 @@ const timerEnabled = ref(false)
 const timerSeconds = ref(90)
 
 const feedbackMode = computed<FeedbackMode>(() => (isExamMode.value ? 'exam' : 'study'))
-
 const allTopicIds = TOPIC_DEFINITIONS.map((t) => t.topicId)
-
 const allSelected = computed(() => selectedTopics.value.length === allTopicIds.length)
+const formattedTimer = computed(() => {
+  const m = Math.floor(timerSeconds.value / 60)
+  const s = timerSeconds.value % 60
+  return s === 0 ? `${m}m` : `${m}m ${s}s`
+})
 
 const modes = [
   { value: 'review' as SessionMode, label: 'Review' },
@@ -220,20 +211,10 @@ async function startSession() {
         apiKey: settingsStore.apiKey,
         db,
       })
-      toast.add({
-        severity: 'success',
-        summary: 'Questions Ready',
-        detail: 'New questions generated successfully.',
-        life: 3000,
-      })
+      toast.add({ severity: 'success', summary: 'Questions Ready', detail: 'New questions generated successfully.', life: 3000 })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate questions.'
-      toast.add({
-        severity: 'error',
-        summary: 'Generation Failed',
-        detail: message,
-        life: 5000,
-      })
+      toast.add({ severity: 'error', summary: 'Generation Failed', detail: message, life: 5000 })
     } finally {
       isGenerating.value = false
       sessionStore.status = 'configured'
@@ -279,67 +260,26 @@ async function startSession() {
   }
 
   &__chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     min-height: 44px;
     padding: 0 var(--space-4);
-    border-radius: var(--radius-full);
-    border: 1.5px solid var(--color-primary);
-    background: transparent;
-    color: var(--color-primary);
+    border: 1.5px solid var(--color-primary) !important;
+    background: transparent !important;
+    color: var(--color-primary) !important;
     font-size: 0.875rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-
-    &:hover {
-      background: var(--color-primary-50);
-    }
 
     &--selected {
-      background: var(--color-primary);
-      color: var(--color-text-on-primary);
-
-      &:hover {
-        background: var(--color-primary);
-      }
+      background: var(--color-primary) !important;
+      color: var(--color-text-on-primary) !important;
     }
-  }
-
-  &__timer-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    min-height: 44px;
-    color: var(--color-text);
   }
 
   &__mode-group {
-    display: flex;
-    gap: 0;
-  }
+    width: 100%;
 
-  &__mode-btn {
-    flex: 1;
-    border: 2px solid var(--color-primary);
-    background: transparent;
-    color: var(--color-primary);
-    padding: 0.625rem 0.5rem;
-    min-height: 44px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-
-    &:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
-    &:not(:first-child) { border-left: none; }
-    &:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
-
-    &--active {
-      background: var(--color-primary);
-      color: #fff;
+    .p-button {
+      flex: 1;
+      min-height: 44px;
     }
   }
 
@@ -369,20 +309,6 @@ async function startSession() {
     &--active {
       color: var(--color-primary);
       font-weight: 700;
-    }
-  }
-
-  &__number-input {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text);
-    background: var(--color-surface);
-
-    &:focus {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 1px;
     }
   }
 

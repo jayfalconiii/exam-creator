@@ -11,6 +11,13 @@
 </script>
 
 <style scoped lang="scss">
+@keyframes nav-spring {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.2); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -19,7 +26,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: calc(56px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
 }
@@ -34,11 +42,13 @@
   color: var(--color-text-muted);
   font-size: 0.875rem;
   font-weight: 500;
+  border-top: 3px solid transparent;
 
   &.router-link-active {
     color: var(--color-primary);
     font-weight: 700;
-    border-top: 3px solid var(--color-primary);
+    border-top-color: var(--color-primary);
+    animation: nav-spring 0.3s ease;
   }
 }
 </style>
