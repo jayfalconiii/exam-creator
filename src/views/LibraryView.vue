@@ -81,21 +81,24 @@
     >
       <div class="import-dialog__tabs">
         <button
-          class="import-dialog__tab import-dialog__tab--active"
+          class="import-dialog__tab"
+          :class="{ 'import-dialog__tab--active': activeImportTab === 'json' }"
           type="button"
+          @click="switchTab('json')"
         >
           JSON
         </button>
         <button
-          class="import-dialog__tab import-dialog__tab--disabled"
+          class="import-dialog__tab"
+          :class="{ 'import-dialog__tab--active': activeImportTab === 'csv' }"
           type="button"
-          disabled
+          @click="switchTab('csv')"
         >
-          CSV (coming soon)
+          CSV
         </button>
       </div>
 
-      <div class="import-dialog__body">
+      <div v-if="activeImportTab === 'json'" class="import-dialog__body">
         <p class="import-dialog__hint">
           Paste a JSON array of questions. Expected shape:
         </p>
@@ -132,7 +135,45 @@
               :key="err.index"
               class="import-dialog__error-item"
             >
-              Item {{ err.index }}: {{ err.fields.join(', ') }}
+              Row {{ err.index }}: {{ err.fields.join(', ') }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div v-else class="import-dialog__body">
+        <p class="import-dialog__hint">
+          Upload a <code>.csv</code> file. Expected columns (header row required):
+        </p>
+        <pre class="import-dialog__example">topicId,text,option1,option2,option3,option4,correctIndex,explanation</pre>
+        <p class="import-dialog__hint import-dialog__hint--sub">
+          <code>correctIndex</code> is zero-based (0 = option1, 3 = option4)
+        </p>
+
+        <input
+          ref="csvFileInput"
+          type="file"
+          accept=".csv"
+          class="import-dialog__file-input"
+          @change="handleCsvFileChange"
+        />
+
+        <div v-if="csvParseError" class="import-dialog__parse-error">
+          {{ csvParseError }}
+        </div>
+
+        <div v-if="csvPreviewResult" class="import-dialog__preview">
+          <p class="import-dialog__preview-summary">
+            <strong>{{ csvPreviewResult.valid.length }}</strong> valid,
+            <strong>{{ csvPreviewResult.invalid.length }}</strong> invalid
+          </p>
+          <ul v-if="csvPreviewResult.invalid.length > 0" class="import-dialog__errors">
+            <li
+              v-for="err in csvPreviewResult.invalid"
+              :key="err.index"
+              class="import-dialog__error-item"
+            >
+              Row {{ err.index }}: {{ err.fields.join(', ') }}
             </li>
           </ul>
         </div>
@@ -141,9 +182,16 @@
       <template #footer>
         <Button label="Cancel" outlined @click="closeDialog" />
         <Button
+          v-if="activeImportTab === 'json'"
           :label="`Import ${previewResult?.valid.length ?? 0} question${(previewResult?.valid.length ?? 0) !== 1 ? 's' : ''}`"
           :disabled="!previewResult || previewResult.valid.length === 0"
           @click="handleImport"
+        />
+        <Button
+          v-else
+          :label="`Import ${csvPreviewResult?.valid.length ?? 0} question${(csvPreviewResult?.valid.length ?? 0) !== 1 ? 's' : ''}`"
+          :disabled="!csvPreviewResult || csvPreviewResult.valid.length === 0"
+          @click="handleCsvImport"
         />
       </template>
     </Dialog>
@@ -204,8 +252,16 @@ function handleDelete(question: Question) {
 
 // Import dialog state
 const showImportDialog = ref(false)
+const activeImportTab = ref<'json' | 'csv'>('json')
+
+// JSON tab state
 const jsonInput = ref('')
 const parseError = ref<string | null>(null)
+
+// CSV tab state
+const csvFileInput = ref<HTMLInputElement | null>(null)
+const csvParseError = ref<string | null>(null)
+const csvPreviewResult = ref<PreviewResult | null>(null)
 
 interface InvalidItem {
   index: number
@@ -313,10 +369,90 @@ function resetPreview() {
   previewResult.value = null
 }
 
+function switchTab(tab: 'json' | 'csv') {
+  activeImportTab.value = tab
+}
+
 function resetImportState() {
+  activeImportTab.value = 'json'
   jsonInput.value = ''
   parseError.value = null
   previewResult.value = null
+  csvParseError.value = null
+  csvPreviewResult.value = null
+  if (csvFileInput.value) csvFileInput.value.value = ''
+}
+
+function handleCsvFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  csvParseError.value = null
+  csvPreviewResult.value = null
+
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    const text = (event.target?.result as string) ?? ''
+    const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '')
+
+    if (lines.length < 2) {
+      csvParseError.value = 'File must contain a header row and at least one data row.'
+      return
+    }
+
+    const dataLines = lines.slice(1)
+    const valid: Omit<Question, 'id'>[] = []
+    const invalid: InvalidItem[] = []
+
+    dataLines.forEach((line, idx) => {
+      const rowNum = idx + 2 // 1-based, row 1 = header
+      const cols = line.split(',')
+
+      if (cols.length < 8) {
+        invalid.push({ index: rowNum, fields: ['not enough columns (expected 8)'] })
+        return
+      }
+
+      const [topicId, text, opt1, opt2, opt3, opt4, correctIndexRaw, ...explanationParts] = cols
+      const explanation = explanationParts.join(',').trim()
+      const correctIndex = parseInt(correctIndexRaw.trim(), 10)
+
+      const item: Record<string, unknown> = {
+        topicId: topicId.trim(),
+        text: text.trim(),
+        options: [opt1.trim(), opt2.trim(), opt3.trim(), opt4.trim()],
+        correctIndex,
+        explanation,
+      }
+
+      const result = validateItem(item, rowNum)
+      if (result.valid) valid.push(result.valid)
+      else if (result.error) invalid.push(result.error)
+    })
+
+    csvPreviewResult.value = { valid, invalid }
+  }
+
+  reader.readAsText(file)
+}
+
+async function handleCsvImport() {
+  if (!csvPreviewResult.value || csvPreviewResult.value.valid.length === 0) return
+
+  const toInsert = csvPreviewResult.value.valid.map((q) => toRaw(q))
+  await db.questions.bulkAdd(toInsert as Question[])
+
+  questions.value = await db.questions.toArray()
+
+  const count = toInsert.length
+  toast.add({
+    severity: 'success',
+    summary: 'Import Successful',
+    detail: `${count} question${count !== 1 ? 's' : ''} imported.`,
+    life: 3000,
+  })
+
+  closeDialog()
 }
 
 function closeDialog() {
@@ -532,6 +668,16 @@ async function handleImport() {
 
   &__preview-btn {
     align-self: flex-start;
+  }
+
+  &__hint--sub {
+    margin-top: calc(-1 * var(--space-2));
+    font-size: 0.8125rem;
+  }
+
+  &__file-input {
+    font-size: 0.875rem;
+    color: var(--color-text);
   }
 
   &__parse-error {
