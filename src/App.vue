@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
 import '@/assets/tokens.css'
 import Toast from 'primevue/toast'
 import BottomNav from '@/components/BottomNav.vue'
@@ -17,14 +17,13 @@ import { useSettingsStore } from '@/stores/settings'
 
 const settingsStore = useSettingsStore()
 
+const prefersDarkQuery = window.matchMedia('(prefers-color-scheme: dark)')
+const systemDark = ref(prefersDarkQuery.matches)
+prefersDarkQuery.addEventListener('change', (e) => { systemDark.value = e.matches })
+
 watchEffect(() => {
-  if (settingsStore.theme === 'dark') {
-    document.documentElement.dataset.theme = 'dark'
-  } else if (settingsStore.theme === 'light') {
-    document.documentElement.dataset.theme = 'light'
-  } else {
-    delete document.documentElement.dataset.theme
-  }
+  const isDark = settingsStore.theme === 'dark' || (settingsStore.theme === 'auto' && systemDark.value)
+  document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
 })
 </script>
 

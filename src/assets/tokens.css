@@ -147,3 +147,28 @@
   --color-warning-light: #451a03;
   --color-danger-light: #450a0a;
 }
+
+[data-theme='light'] {
+  /* Background & Surface */
+  --color-bg: #ffffff;
+  --color-bg-subtle: var(--color-neutral-50);
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-overlay: var(--color-neutral-100);
+
+  /* Text */
+  --color-text: var(--color-neutral-900);
+  --color-text-muted: var(--color-neutral-500);
+  --color-text-subtle: var(--color-neutral-400);
+  --color-text-inverse: #ffffff;
+  --color-text-on-primary: #ffffff;
+
+  /* Border */
+  --color-border: var(--color-neutral-200);
+  --color-border-strong: var(--color-neutral-300);
+
+  /* Semantic */
+  --color-success-light: #dcfce7;
+  --color-warning-light: #fef3c7;
+  --color-danger-light: #fee2e2;
+}
