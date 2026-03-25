@@ -5,6 +5,19 @@
     </header>
 
     <section class="settings-view__section">
+      <h2 class="settings-view__section-title">Appearance</h2>
+      <ButtonGroup class="settings-view__theme-group">
+        <Button
+          v-for="option in themeOptions"
+          :key="option.value"
+          :label="option.label"
+          :outlined="settingsStore.theme !== option.value"
+          @click="settingsStore.saveTheme(option.value)"
+        />
+      </ButtonGroup>
+    </section>
+
+    <section class="settings-view__section">
       <h2 class="settings-view__section-title">API Key</h2>
       <div class="settings-view__field">
         <label for="api-key-input">Anthropic API Key</label>
@@ -70,36 +83,43 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import InputText from 'primevue/inputtext'
 import { useSettingsStore } from '@/stores/settings'
-import type { SessionMode } from '@/types'
+import type { SessionMode, ThemePreference } from '@/types'
 
-const store = useSettingsStore()
+const settingsStore = useSettingsStore()
+
+const themeOptions = [
+  { label: 'Light', value: 'light' as ThemePreference },
+  { label: 'Auto', value: 'auto' as ThemePreference },
+  { label: 'Dark', value: 'dark' as ThemePreference },
+]
 
 const apiKeyInput = ref('')
 const apiKeySaved = ref(false)
-const questionCountInput = ref(store.defaultQuestionCount)
+const questionCountInput = ref(settingsStore.defaultQuestionCount)
 const questionCountInputStr = computed({
   get: () => String(questionCountInput.value),
   set: (v) => { questionCountInput.value = Number(v) },
 })
-const modeInput = ref<SessionMode>(store.defaultMode)
+const modeInput = ref<SessionMode>(settingsStore.defaultMode)
 const defaultsSaved = ref(false)
 
 onMounted(async () => {
-  await store.loadFromDB()
-  apiKeyInput.value = store.apiKey
-  questionCountInput.value = store.defaultQuestionCount
-  modeInput.value = store.defaultMode
+  await settingsStore.loadFromDB()
+  apiKeyInput.value = settingsStore.apiKey
+  questionCountInput.value = settingsStore.defaultQuestionCount
+  modeInput.value = settingsStore.defaultMode
 })
 
 async function handleSaveApiKey() {
-  await store.saveApiKey(apiKeyInput.value)
+  await settingsStore.saveApiKey(apiKeyInput.value)
   apiKeySaved.value = true
 }
 
 async function handleSaveDefaults() {
-  await store.saveDefaults(questionCountInput.value, modeInput.value)
+  await settingsStore.saveDefaults(questionCountInput.value, modeInput.value)
   defaultsSaved.value = true
 }
 </script>
@@ -151,6 +171,15 @@ async function handleSaveDefaults() {
     &:focus {
       outline: 2px solid var(--color-primary);
       outline-offset: 1px;
+    }
+  }
+
+  &__theme-group {
+    width: 100%;
+
+    .p-button {
+      flex: 1;
+      min-height: 44px;
     }
   }
 
