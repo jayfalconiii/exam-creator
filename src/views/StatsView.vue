@@ -98,11 +98,12 @@ const SNAP_THRESHOLD = 40
 
 const openSwipeId = ref<number | null>(null)
 const swipeOffsets = ref<Map<number, number>>(new Map())
-const touchStartX = ref<Map<number, number>>(new Map())
-const touchStartY = ref<Map<number, number>>(new Map())
 const dragging = ref<Set<number>>(new Set())
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+interface SwipeStart { x: number; y: number; baseOffset: number }
+const swipeStartMap = new Map<number, SwipeStart>()
 
 function getOffset(id: number): number {
   return -(swipeOffsets.value.get(id) ?? 0)
@@ -124,30 +125,24 @@ function openRow(id: number) {
 
 function onTouchStart(e: TouchEvent, id: number) {
   const touch = e.touches[0]
-  touchStartX.value = new Map(touchStartX.value).set(id, touch.clientX)
-  touchStartY.value = new Map(touchStartY.value).set(id, touch.clientY)
+  const baseOffset = openSwipeId.value === id ? SNAP_OPEN : 0
+  swipeStartMap.set(id, { x: touch.clientX, y: touch.clientY, baseOffset })
   const newDragging = new Set(dragging.value)
   newDragging.add(id)
   dragging.value = newDragging
 }
 
 function onTouchMove(e: TouchEvent, id: number) {
-  const startX = touchStartX.value.get(id)
-  const startY = touchStartY.value.get(id)
-  if (startX === undefined || startY === undefined) return
+  const start = swipeStartMap.get(id)
+  if (!start) return
 
   const touch = e.touches[0]
-  const dx = startX - touch.clientX
-  const dy = Math.abs(touch.clientY - startY)
+  const dx = start.x - touch.clientX
+  const dy = touch.clientY - start.y
 
-  // Only register as horizontal swipe if horizontal delta >= 2x vertical
-  if (Math.abs(dx) < dy * 2 && swipeOffsets.value.get(id) === 0) return
+  if (Math.abs(dx) < Math.abs(dy) * 2 && swipeOffsets.value.get(id) === 0) return
 
-  const currentOpen = swipeOffsets.value.get(id) ?? 0
-  const rawOffset = currentOpen + dx
-
-  // Clamp between 0 and SNAP_OPEN
-  const clamped = Math.max(0, Math.min(SNAP_OPEN, rawOffset))
+  const clamped = Math.max(0, Math.min(SNAP_OPEN, start.baseOffset + dx))
   swipeOffsets.value = new Map(swipeOffsets.value).set(id, clamped)
 }
 
@@ -160,17 +155,10 @@ function onTouchEnd(id: number) {
   const prevOpen = openSwipeId.value
 
   if (offset >= SNAP_THRESHOLD) {
-    // Close previous if different
-    if (prevOpen !== null && prevOpen !== id) {
-      closeRow(prevOpen)
-    }
+    if (prevOpen !== null && prevOpen !== id) closeRow(prevOpen)
     openRow(id)
   } else {
     closeRow(id)
-  }
-
-  if (prefersReducedMotion) {
-    // Already snapped instantly via direct state change
   }
 }
 
