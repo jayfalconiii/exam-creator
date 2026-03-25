@@ -151,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import { useConfirm } from 'primevue/useconfirm'
@@ -327,7 +327,7 @@ function closeDialog() {
 async function handleImport() {
   if (!previewResult.value || previewResult.value.valid.length === 0) return
 
-  const toInsert = previewResult.value.valid.map((q) => JSON.parse(JSON.stringify(q)))
+  const toInsert = previewResult.value.valid.map((q) => toRaw(q))
   await db.questions.bulkAdd(toInsert as Question[])
 
   questions.value = await db.questions.toArray()
