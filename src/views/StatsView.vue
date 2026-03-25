@@ -101,8 +101,6 @@ const openSwipeId = ref<number | null>(null)
 const swipeOffsets = ref<Map<number, number>>(new Map())
 const dragging = ref<Set<number>>(new Set())
 
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 interface SwipeStart { x: number; y: number; baseOffset: number }
 const swipeStartMap = new Map<number, SwipeStart>()
 
