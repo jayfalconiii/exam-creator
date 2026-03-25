@@ -13,6 +13,9 @@ const router = createRouter({
     { path: '/study/session/review', component: () => import('@/views/SessionReviewView.vue') },
     { path: '/stats', component: () => import('@/views/StatsView.vue') },
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
+    { path: '/library', component: () => import('@/views/LibraryView.vue') },
+    { path: '/library/new', component: () => import('@/views/LibraryView.vue') },
+    { path: '/library/:id/edit', component: () => import('@/views/LibraryView.vue') },
   ],
 })
 

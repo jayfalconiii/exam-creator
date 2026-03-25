@@ -4,6 +4,7 @@
     <RouterLink to="/topics" class="bottom-nav__tab">Topics</RouterLink>
     <RouterLink to="/study" class="bottom-nav__tab">Study</RouterLink>
     <RouterLink to="/stats" class="bottom-nav__tab">Stats</RouterLink>
+    <RouterLink to="/library" class="bottom-nav__tab">Library</RouterLink>
   </nav>
 </template>
 
