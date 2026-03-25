@@ -55,34 +55,49 @@
       <p v-if="filteredQuestions.length === 0" class="library-view__empty">
         No questions match the selected filter.
       </p>
-      <article
+      <div
         v-for="question in filteredQuestions"
         :key="question.id"
-        class="library-view__card"
+        class="library-view__card-wrapper"
       >
-        <header class="library-view__card-header">
-          <div class="library-view__card-badges">
-            <span class="library-view__badge">{{ question.topicId }}</span>
-            <span v-if="duplicateIds.has(question.id!)" class="library-view__badge library-view__badge--duplicate">Duplicate {{ duplicateIds.get(question.id!) }}%</span>
-          </div>
-          <div class="library-view__card-actions">
-            <Button
-              label="Edit"
-              outlined
-              size="small"
-              @click="router.push(`/library/${question.id}/edit`)"
-            />
-            <Button
-              label="Delete"
-              outlined
-              size="small"
-              severity="danger"
-              @click="handleDelete(question)"
-            />
-          </div>
-        </header>
-        <p class="library-view__card-text">{{ question.text }}</p>
-      </article>
+        <button
+          class="library-view__delete-action"
+          @click="handleDelete(question)"
+        >
+          Delete
+        </button>
+        <article
+          class="library-view__card"
+          :class="{ 'library-view__card--no-transition': prefersReducedMotion }"
+          :style="{ transform: `translateX(${getSwipeOffset(question.id ?? 0)}px)` }"
+          @touchstart.passive="onTouchStart($event, question.id ?? 0)"
+          @touchmove.passive="onTouchMove($event, question.id ?? 0)"
+          @touchend="onTouchEnd(question.id ?? 0)"
+        >
+          <header class="library-view__card-header">
+            <div class="library-view__card-badges">
+              <span class="library-view__badge">{{ question.topicId }}</span>
+              <span v-if="duplicateIds.has(question.id!)" class="library-view__badge library-view__badge--duplicate">Duplicate {{ duplicateIds.get(question.id!) }}%</span>
+            </div>
+            <div class="library-view__card-actions">
+              <Button
+                label="Edit"
+                outlined
+                size="small"
+                @click="router.push(`/library/${question.id}/edit`)"
+              />
+              <Button
+                label="Delete"
+                outlined
+                size="small"
+                severity="danger"
+                @click="handleDelete(question)"
+              />
+            </div>
+          </header>
+          <p class="library-view__card-text">{{ question.text }}</p>
+        </article>
+      </div>
     </section>
 
     <Dialog
@@ -322,6 +337,66 @@ function handleDelete(question: Question) {
       toast.add({ severity: 'success', summary: 'Deleted', detail: 'Question removed.', life: 3000 })
     },
   })
+}
+
+// Swipe state
+const SWIPE_MAX = 80
+const SWIPE_THRESHOLD = 40
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const openSwipeId = ref<number | null>(null)
+const swipeOffsets = ref<Map<number, number>>(new Map())
+
+interface SwipeState {
+  startX: number
+  startY: number
+}
+
+const swipeMap = new Map<number, SwipeState>()
+
+function getSwipeOffset(id: number): number {
+  if (swipeOffsets.value.has(id)) return swipeOffsets.value.get(id)!
+  if (openSwipeId.value === id) return -SWIPE_MAX
+  return 0
+}
+
+function onTouchStart(e: TouchEvent, id: number) {
+  const touch = e.touches[0]
+  swipeMap.set(id, { startX: touch.clientX, startY: touch.clientY })
+}
+
+function onTouchMove(e: TouchEvent, id: number) {
+  const state = swipeMap.get(id)
+  if (!state) return
+
+  const touch = e.touches[0]
+  const dx = touch.clientX - state.startX
+  const dy = touch.clientY - state.startY
+
+  if (Math.abs(dx) < Math.abs(dy) * 2) return
+
+  const baseOffset = openSwipeId.value === id ? -SWIPE_MAX : 0
+  const raw = baseOffset + dx
+  const clamped = Math.max(-SWIPE_MAX, Math.min(0, raw))
+
+  swipeOffsets.value = new Map(swipeOffsets.value).set(id, clamped)
+}
+
+function onTouchEnd(id: number) {
+  const offset = swipeOffsets.value.get(id) ?? (openSwipeId.value === id ? -SWIPE_MAX : 0)
+
+  if (offset < -SWIPE_THRESHOLD) {
+    if (openSwipeId.value !== null && openSwipeId.value !== id) {
+      swipeOffsets.value = new Map(swipeOffsets.value).set(openSwipeId.value, 0)
+    }
+    openSwipeId.value = id
+    swipeOffsets.value = new Map(swipeOffsets.value).set(id, -SWIPE_MAX)
+  } else {
+    if (openSwipeId.value === id) openSwipeId.value = null
+    swipeOffsets.value = new Map(swipeOffsets.value).set(id, 0)
+  }
+
+  swipeMap.delete(id)
 }
 
 // Import dialog state
@@ -646,12 +721,42 @@ async function handleImport() {
     }
   }
 
+  &__card-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  &__delete-action {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background: var(--color-danger, #dc2626);
+    color: #fff;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   &__card {
+    position: relative;
     background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     padding: var(--space-4);
     box-shadow: var(--shadow-sm);
+    transition: transform 0.25s ease;
+    will-change: transform;
+
+    &--no-transition {
+      transition: none;
+    }
 
     &-header {
       display: flex;
