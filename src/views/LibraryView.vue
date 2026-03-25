@@ -748,7 +748,7 @@ async function handleImport() {
     position: relative;
     background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     padding: var(--space-4);
     box-shadow: var(--shadow-sm);
     transition: transform 0.25s ease;
