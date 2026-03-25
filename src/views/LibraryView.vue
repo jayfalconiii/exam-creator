@@ -327,7 +327,7 @@ function closeDialog() {
 async function handleImport() {
   if (!previewResult.value || previewResult.value.valid.length === 0) return
 
-  const toInsert = previewResult.value.valid
+  const toInsert = previewResult.value.valid.map((q) => ({ ...q }))
   await db.questions.bulkAdd(toInsert as Question[])
 
   questions.value = await db.questions.toArray()
