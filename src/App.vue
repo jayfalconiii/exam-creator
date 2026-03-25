@@ -1,5 +1,6 @@
 <template>
-  <Toast />
+  <Toast position="bottom-right" />
+  <ConfirmDialog />
   <Transition name="slide-fade" mode="out-in">
     <RouterView />
   </Transition>
@@ -11,6 +12,7 @@
 import { ref, watchEffect } from 'vue'
 import '@/assets/tokens.css'
 import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import { useSettingsStore } from '@/stores/settings'
@@ -64,6 +66,13 @@ body {
 .slide-fade-leave-to {
   opacity: 0;
   transform: translateX(-8px);
+}
+
+/* Toast — lift above bottom nav, constrain width on small screens */
+:root .p-toast {
+  bottom: calc(56px + env(safe-area-inset-bottom) + var(--space-2));
+  max-width: calc(100vw - var(--space-8));
+  right: var(--space-4);
 }
 
 /* Button micro-interactions */
