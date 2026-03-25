@@ -8,10 +8,24 @@
 </template>
 
 <script setup lang="ts">
+import { watchEffect } from 'vue'
 import '@/assets/tokens.css'
 import Toast from 'primevue/toast'
 import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
+import { useSettingsStore } from '@/stores/settings'
+
+const settingsStore = useSettingsStore()
+
+watchEffect(() => {
+  if (settingsStore.theme === 'dark') {
+    document.documentElement.dataset.theme = 'dark'
+  } else if (settingsStore.theme === 'light') {
+    document.documentElement.dataset.theme = 'light'
+  } else {
+    delete document.documentElement.dataset.theme
+  }
+})
 </script>
 
 <style lang="scss">
