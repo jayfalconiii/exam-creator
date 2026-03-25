@@ -6,7 +6,10 @@
           <h1>Library</h1>
           <p class="library-view__subtitle">
             {{ filteredQuestions.length }} question{{ filteredQuestions.length !== 1 ? 's' : '' }}
-            <template v-if="activeTopicId !== null">
+            <template v-if="activeFilter === DUPLICATES_SENTINEL">
+              with duplicates
+            </template>
+            <template v-else-if="activeFilter !== null">
               in {{ activeTopicName }}
             </template>
             <template v-else>
@@ -24,8 +27,8 @@
     <section class="library-view__filters">
       <button
         class="library-view__chip"
-        :class="{ 'library-view__chip--active': activeTopicId === null }"
-        @click="activeTopicId = null"
+        :class="{ 'library-view__chip--active': activeFilter === null }"
+        @click="activeFilter = null"
       >
         All
       </button>
@@ -33,10 +36,18 @@
         v-for="topic in topics"
         :key="topic.topicId"
         class="library-view__chip"
-        :class="{ 'library-view__chip--active': activeTopicId === topic.topicId }"
-        @click="activeTopicId = topic.topicId"
+        :class="{ 'library-view__chip--active': activeFilter === topic.topicId }"
+        @click="activeFilter = topic.topicId"
       >
         {{ topic.name }}
+      </button>
+      <button
+        v-if="duplicateIds.size > 0"
+        class="library-view__chip library-view__chip--duplicates"
+        :class="{ 'library-view__chip--active': activeFilter === DUPLICATES_SENTINEL }"
+        @click="activeFilter = DUPLICATES_SENTINEL"
+      >
+        Duplicates
       </button>
     </section>
 
@@ -50,7 +61,10 @@
         class="library-view__card"
       >
         <header class="library-view__card-header">
-          <span class="library-view__badge">{{ question.topicId }}</span>
+          <div class="library-view__card-badges">
+            <span class="library-view__badge">{{ question.topicId }}</span>
+            <span v-if="duplicateIds.has(question.id!)" class="library-view__badge library-view__badge--duplicate">Duplicate {{ duplicateIds.get(question.id!) }}%</span>
+          </div>
           <div class="library-view__card-actions">
             <Button
               label="Edit"
@@ -209,22 +223,82 @@ import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
 
+const DUPLICATES_SENTINEL = '__duplicates__'
+
 const router = useRouter()
 const confirm = useConfirm()
 const toast = useToast()
 
 const questions = ref<Question[]>([])
 const topics = ref<Topic[]>([])
-const activeTopicId = ref<string | null>(null)
+const activeFilter = ref<string | null>(null)
 
-const filteredQuestions = computed(() =>
-  activeTopicId.value === null
-    ? questions.value
-    : questions.value.filter((q) => q.topicId === activeTopicId.value),
-)
+function normalise(text: string): string {
+  return text.toLowerCase().trim()
+}
+
+function bigrams(text: string): string[] {
+  const result: string[] = []
+  for (let i = 0; i < text.length - 1; i++) {
+    result.push(text.slice(i, i + 2))
+  }
+  return result
+}
+
+function diceCoefficient(a: string, b: string): number {
+  const na = normalise(a)
+  const nb = normalise(b)
+  if (na === nb) return 1
+  if (na.length < 2 || nb.length < 2) return 0
+  const biA = bigrams(na)
+  const biB = bigrams(nb)
+  const setB = new Map<string, number>()
+  for (const bg of biB) setB.set(bg, (setB.get(bg) ?? 0) + 1)
+  let matches = 0
+  for (const bg of biA) {
+    const count = setB.get(bg) ?? 0
+    if (count > 0) {
+      matches++
+      setB.set(bg, count - 1)
+    }
+  }
+  return (2 * matches) / (biA.length + biB.length)
+}
+
+const duplicateIds = computed((): Map<number, number> => {
+  const ids = new Map<number, number>()
+  const byTopic = new Map<string, Question[]>()
+  for (const q of questions.value) {
+    if (!byTopic.has(q.topicId)) byTopic.set(q.topicId, [])
+    byTopic.get(q.topicId)!.push(q)
+  }
+  for (const group of byTopic.values()) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const score = diceCoefficient(group[i].text, group[j].text)
+        if (score >= 0.7) {
+          const pct = Math.round(score * 100)
+          const idI = group[i].id!
+          const idJ = group[j].id!
+          ids.set(idI, Math.max(ids.get(idI) ?? 0, pct))
+          ids.set(idJ, Math.max(ids.get(idJ) ?? 0, pct))
+        }
+      }
+    }
+  }
+  return ids
+})
+
+const filteredQuestions = computed(() => {
+  if (activeFilter.value === DUPLICATES_SENTINEL) {
+    return questions.value.filter((q) => duplicateIds.value.has(q.id!))
+  }
+  if (activeFilter.value === null) return questions.value
+  return questions.value.filter((q) => q.topicId === activeFilter.value)
+})
 
 const activeTopicName = computed(() =>
-  topics.value.find((t) => t.topicId === activeTopicId.value)?.name ?? activeTopicId.value,
+  topics.value.find((t) => t.topicId === activeFilter.value)?.name ?? activeFilter.value,
 )
 
 onMounted(async () => {
@@ -556,6 +630,22 @@ async function handleImport() {
     padding: var(--space-8) 0;
   }
 
+  &__chip--duplicates {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+
+    &.library-view__chip--active {
+      background: var(--color-warning);
+      border-color: var(--color-warning);
+      color: #fff;
+    }
+
+    &:not(.library-view__chip--active):hover {
+      border-color: var(--color-warning);
+      color: var(--color-warning);
+    }
+  }
+
   &__card {
     background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
@@ -569,6 +659,13 @@ async function handleImport() {
       justify-content: space-between;
       gap: var(--space-2);
       margin-bottom: var(--space-2);
+    }
+
+    &-badges {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      flex-wrap: wrap;
     }
 
     &-actions {
@@ -601,6 +698,12 @@ async function handleImport() {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 140px;
+
+    &--duplicate {
+      background: var(--color-warning-light);
+      color: var(--color-accent-700);
+      max-width: none;
+    }
   }
 }
 
