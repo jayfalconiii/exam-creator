@@ -63,6 +63,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
 import { db } from '@/db/db'
+import { updatedRawScore } from '@/composables/useSpacedRepetition'
 import type { Session } from '@/types'
 
 const sessions = ref<Session[]>([])
@@ -174,6 +175,28 @@ function handleDelete(session: Session) {
       await db.sessions.delete(session.id)
       sessions.value = sessions.value.filter((s) => s.id !== session.id)
       closeRow(session.id!)
+
+      // Recompute rawScore, lastReviewedAt, totalSessions for affected topics
+      const affectedTopicIds = [...new Set(session.topicIds)]
+      const remaining = await db.sessions.toArray()
+      for (const topicId of affectedTopicIds) {
+        const topic = await db.topics.where('topicId').equals(topicId).first()
+        if (!topic?.id) continue
+        const topicSessions = remaining
+          .filter((s) => s.topicIds.includes(topicId) && s.completedAt !== null)
+          .sort((a, b) => a.startedAt - b.startedAt)
+        let rawScore = 0
+        for (const s of topicSessions) {
+          const pct = s.totalQuestions > 0 ? s.correctCount / s.totalQuestions : 0
+          rawScore = updatedRawScore(rawScore, pct)
+        }
+        const lastSession = topicSessions[topicSessions.length - 1]
+        await db.topics.update(topic.id, {
+          rawScore,
+          lastReviewedAt: lastSession?.completedAt ?? null,
+          totalSessions: topicSessions.length,
+        })
+      }
     },
   })
 }
