@@ -10,7 +10,7 @@
 <script setup lang="ts">
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 @keyframes nav-spring {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.2); }

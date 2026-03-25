@@ -105,7 +105,7 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .topic-detail-view {
   padding: var(--space-4);
   padding-bottom: 4rem;

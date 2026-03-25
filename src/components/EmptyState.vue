@@ -20,7 +20,7 @@ const emit = defineEmits<{ cta: [] }>()
   </section>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .empty-state {
   display: flex;
   flex-direction: column;

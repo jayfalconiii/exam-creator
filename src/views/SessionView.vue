@@ -130,7 +130,7 @@ onMounted(loadQueue)
 onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .session-view {
   padding: var(--space-4);
   display: flex;

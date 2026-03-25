@@ -75,7 +75,7 @@ function quickStart() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .home-view {
   padding: var(--space-4);
   display: flex;

@@ -14,7 +14,7 @@ import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 </script>
 
-<style>
+<style lang="scss">
 *, *::before, *::after {
   box-sizing: border-box;
 }

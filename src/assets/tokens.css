@@ -95,3 +95,30 @@
   --space-12: 48px;
   --space-16: 64px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Background & Surface */
+    --color-bg: var(--color-neutral-950);
+    --color-bg-subtle: var(--color-neutral-900);
+    --color-surface: var(--color-neutral-900);
+    --color-surface-raised: var(--color-neutral-800);
+    --color-surface-overlay: var(--color-neutral-800);
+
+    /* Text */
+    --color-text: var(--color-neutral-50);
+    --color-text-muted: var(--color-neutral-400);
+    --color-text-subtle: var(--color-neutral-500);
+    --color-text-inverse: var(--color-neutral-950);
+    --color-text-on-primary: #ffffff;
+
+    /* Border */
+    --color-border: var(--color-neutral-700);
+    --color-border-strong: var(--color-neutral-600);
+
+    /* Semantic — lighten backgrounds for dark surfaces */
+    --color-success-light: #14532d;
+    --color-warning-light: #451a03;
+    --color-danger-light: #450a0a;
+  }
+}

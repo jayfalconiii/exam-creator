@@ -74,7 +74,7 @@ function formatDuration(ms: number): string {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .stats-view {
   padding: var(--space-4);
   display: flex;

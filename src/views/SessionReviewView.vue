@@ -81,7 +81,7 @@ async function done() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .session-review-view {
   padding: var(--space-4);
   display: flex;

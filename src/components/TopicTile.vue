@@ -11,7 +11,7 @@ import type { TopicWithScore } from '@/stores/topics'
 defineProps<{ topic: TopicWithScore }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .topic-tile {
   display: flex;
   flex-direction: column;

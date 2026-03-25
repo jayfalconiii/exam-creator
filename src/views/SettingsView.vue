@@ -104,7 +104,7 @@ async function handleSaveDefaults() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .settings-view {
   padding: var(--space-4);
 

@@ -14,7 +14,8 @@
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Topics</h2>
         <div class="study-view__chips">
-          <button
+          <Button
+            rounded
             type="button"
             data-testid="topic-all"
             class="study-view__chip"
@@ -22,10 +23,11 @@
             @click="toggleAll"
           >
             All
-          </button>
-          <button
+          </Button>
+          <Button
             v-for="topic in TOPIC_DEFINITIONS"
             :key="topic.topicId"
+            rounded
             type="button"
             :data-testid="`topic-${topic.topicId}`"
             class="study-view__chip"
@@ -40,7 +42,7 @@
       <section class="study-view__section">
         <h2 class="study-view__section-heading">Mode</h2>
         <div class="study-view__mode-group">
-          <button
+          <Button
             v-for="m in modes"
             :key="m.value"
             type="button"
@@ -48,7 +50,7 @@
             class="study-view__mode-btn"
             :class="{ 'study-view__mode-btn--active': selectedMode === m.value }"
             @click="selectedMode = m.value"
-          >{{ m.label }}</button>
+          >{{ m.label }}</Button>
         </div>
       </section>
 
@@ -242,7 +244,7 @@ async function startSession() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .study-view {
   padding: var(--space-4);
 
@@ -273,7 +275,7 @@ async function startSession() {
   &__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.5rem 0.75rem;
   }
 
   &__chip {
@@ -291,13 +293,17 @@ async function startSession() {
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 
+    &:hover {
+      background: var(--color-primary-50);
+    }
+
     &--selected {
       background: var(--color-primary);
       color: var(--color-text-on-primary);
-    }
 
-    &:hover:not(&--selected) {
-      background: var(--color-primary-50);
+      &:hover {
+        background: var(--color-primary);
+      }
     }
   }
 
