@@ -61,13 +61,13 @@ describe('seed/seedIfNeeded', () => {
     }
   })
 
-  it('every question has a valid topicId from TOPIC_DEFINITIONS', async () => {
+  it('every question has a valid topicId matching a seeded topic', async () => {
     const db = await freshDb()
     const { seedIfNeeded } = await import('@/db/seed')
-    const { TOPIC_DEFINITIONS } = await import('@/data/topics')
     await seedIfNeeded(db as any)
 
-    const validIds = new Set(TOPIC_DEFINITIONS.map((t) => t.topicId))
+    const topics = await db.topics.toArray()
+    const validIds = new Set(topics.map((t) => t.topicId))
     const questions = await db.questions.toArray()
     for (const q of questions) {
       expect(validIds.has(q.topicId)).toBe(true)
@@ -90,8 +90,11 @@ describe('seed/seedIfNeeded', () => {
     }
   })
 
-  it('TOPIC_DEFINITIONS has exactly 17 entries', async () => {
-    const { TOPIC_DEFINITIONS } = await import('@/data/topics')
-    expect(TOPIC_DEFINITIONS).toHaveLength(17)
+  it('seed inserts exactly 17 topics', async () => {
+    const db = await freshDb()
+    const { seedIfNeeded } = await import('@/db/seed')
+    await seedIfNeeded(db as any)
+    const topics = await db.topics.toArray()
+    expect(topics).toHaveLength(17)
   })
 })

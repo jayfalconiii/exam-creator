@@ -19,6 +19,7 @@ vi.mock('@/db/db', () => ({
   db: {
     settings: { where: () => ({ startsWith: () => ({ toArray: async () => [] }) }), bulkPut: async () => {} },
     questions: { bulkAdd: async () => [] },
+    topics: { toArray: async () => [] },
   },
 }))
 
