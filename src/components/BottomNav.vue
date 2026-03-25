@@ -11,13 +11,6 @@
 </script>
 
 <style scoped lang="scss">
-@keyframes nav-spring {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.2); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
-}
-
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -46,7 +39,6 @@
     color: var(--color-primary);
     font-weight: 700;
     border-top: 3px solid var(--color-primary);
-    animation: nav-spring 0.3s ease;
   }
 }
 </style>

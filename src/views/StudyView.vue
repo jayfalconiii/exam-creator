@@ -275,7 +275,7 @@ async function startSession() {
   &__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 0.75rem;
+    gap: 0.5rem 0.25rem;
   }
 
   &__chip {
