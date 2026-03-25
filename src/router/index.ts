@@ -15,7 +15,7 @@ const router = createRouter({
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/library', component: () => import('@/views/LibraryView.vue') },
     { path: '/library/new', component: () => import('@/views/QuestionFormView.vue') },
-    { path: '/library/:id/edit', component: () => import('@/views/LibraryView.vue') },
+    { path: '/library/:id/edit', component: () => import('@/views/QuestionFormView.vue') },
   ],
 })
 

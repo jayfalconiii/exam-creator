@@ -4,7 +4,7 @@
       <button class="question-form-view__back-btn" @click="router.push('/library')">
         ← Back
       </button>
-      <h1 class="question-form-view__title">New Question</h1>
+      <h1 class="question-form-view__title">{{ isEditMode ? 'Edit Question' : 'New Question' }}</h1>
     </header>
 
     <form class="question-form-view__form" @submit.prevent="handleSave">
@@ -99,8 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
@@ -111,7 +111,10 @@ import { db } from '@/db/db'
 import type { Topic } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
+
+const isEditMode = computed(() => !!route.params.id)
 
 const topics = ref<Topic[]>([])
 const topicId = ref<string>('')
@@ -125,6 +128,21 @@ const errors = ref<Record<string, string>>({})
 
 onMounted(async () => {
   topics.value = await db.topics.toArray()
+
+  if (isEditMode.value) {
+    const id = Number(route.params.id)
+    const question = await db.questions.get(id)
+    if (!question) {
+      toast.add({ severity: 'error', summary: 'Not found', detail: 'Question not found.', life: 3000 })
+      router.push('/library')
+      return
+    }
+    topicId.value = question.topicId
+    text.value = question.text
+    options.value = [...question.options]
+    correctIndex.value = question.correctIndex
+    explanation.value = question.explanation
+  }
 })
 
 function validate(): boolean {
@@ -140,18 +158,32 @@ function validate(): boolean {
 
 async function handleSave() {
   if (!validate()) return
-  await db.questions.add({
-    topicId: topicId.value,
-    text: text.value.trim(),
-    options: options.value.map((o) => o.trim()),
-    correctIndex: correctIndex.value as number,
-    explanation: explanation.value.trim(),
-    source: 'generated',
-    errorCount: 0,
-    lastSeenAt: null,
-    createdAt: Date.now(),
-  })
-  toast.add({ severity: 'success', summary: 'Question added', detail: 'Your question has been saved.', life: 3000 })
+
+  if (isEditMode.value) {
+    const id = Number(route.params.id)
+    await db.questions.update(id, {
+      topicId: topicId.value,
+      text: text.value.trim(),
+      options: options.value.map((o) => o.trim()),
+      correctIndex: correctIndex.value as number,
+      explanation: explanation.value.trim(),
+    })
+    toast.add({ severity: 'success', summary: 'Question updated', detail: 'Changes saved.', life: 3000 })
+  } else {
+    await db.questions.add({
+      topicId: topicId.value,
+      text: text.value.trim(),
+      options: options.value.map((o) => o.trim()),
+      correctIndex: correctIndex.value as number,
+      explanation: explanation.value.trim(),
+      source: 'generated',
+      errorCount: 0,
+      lastSeenAt: null,
+      createdAt: Date.now(),
+    })
+    toast.add({ severity: 'success', summary: 'Question added', detail: 'Your question has been saved.', life: 3000 })
+  }
+
   router.push('/library')
 }
 </script>
