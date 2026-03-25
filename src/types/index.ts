@@ -31,6 +31,7 @@ export interface Topic {
   id?: number
   topicId: string
   name: string
+  color: string
   rawScore: number
   lastReviewedAt: number | null
   totalSessions: number
