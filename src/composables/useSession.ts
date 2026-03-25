@@ -69,7 +69,7 @@ export async function completeSession(
     startedAt,
     completedAt,
     mode: config.mode,
-    topicIds: config.topicIds,
+    topicIds: [...config.topicIds],
     totalQuestions: answers.length,
     correctCount,
     durationMs,

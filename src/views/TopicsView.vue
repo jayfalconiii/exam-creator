@@ -26,7 +26,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .topics-view {
   padding-bottom: 4rem;
 

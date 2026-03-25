@@ -46,7 +46,7 @@ const emit = defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 @keyframes pulse-correct {
   0%   { transform: scale(1); }
   50%  { transform: scale(1.04); }

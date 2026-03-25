@@ -1,17 +1,44 @@
 <template>
-  <RouterLink :to="`/topics/${topic.topicId}`" class="topic-tile" :data-color="topic.color">
+  <RouterLink
+    :to="`/topics/${topic.topicId}`"
+    class="topic-tile"
+    :style="{ backgroundColor: tileColor }"
+  >
     <span class="topic-tile__name">{{ topic.name }}</span>
     <span class="topic-tile__score">{{ Math.round(topic.effectiveScore) }}%</span>
   </RouterLink>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TopicWithScore } from '@/stores/topics'
 
-defineProps<{ topic: TopicWithScore }>()
+const props = defineProps<{ topic: TopicWithScore }>()
+
+const COLOR_MAP: Record<string, string> = {
+  'ec2':             '#1565c0',
+  's3':              '#00695c',
+  'vpc':             '#6a1b9a',
+  'iam':             '#c62828',
+  'rds':             '#283593',
+  'lambda':          '#ad1457',
+  'cloudfront':      '#00838f',
+  'route53':         '#4e342e',
+  'elb':             '#2e7d32',
+  'dynamodb':        '#4527a0',
+  'sqs-sns':         '#e65100',
+  'cloudwatch':      '#37474f',
+  'efs-fsx':         '#0277bd',
+  'glacier':         '#4a148c',
+  'kms-secrets':     '#b71c1c',
+  'trusted-advisor': '#1b5e20',
+  'storage-gateway': '#0d47a1',
+}
+
+const tileColor = computed(() => COLOR_MAP[props.topic.topicId] ?? '#78716c')
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .topic-tile {
   display: flex;
   flex-direction: column;
@@ -20,10 +47,9 @@ defineProps<{ topic: TopicWithScore }>()
   padding: 0.75rem;
   border-radius: var(--radius-lg);
   text-decoration: none;
-  color: var(--color-text-inverse);
+  color: #fff;
   font-weight: 600;
   min-height: 72px;
-  background-color: var(--color-neutral-400);
   box-shadow: var(--shadow-md);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 
@@ -34,31 +60,15 @@ defineProps<{ topic: TopicWithScore }>()
     box-shadow: var(--shadow-lg);
   }
 
-  &[data-color='green'] {
-    background-color: #2e7d32;
-  }
-
-  &[data-color='yellow'] {
-    background-color: var(--color-accent-600);
-  }
-
-  &[data-color='red'] {
-    background-color: #c62828;
-  }
-
-  &[data-color='gray'] {
-    background-color: var(--color-neutral-400);
-  }
-
-  .topic-tile__name {
+  &__name {
     font-size: 0.875rem;
     text-align: center;
   }
 
-  .topic-tile__score {
+  &__score {
     font-size: 1.25rem;
     margin-top: 0.25rem;
-    color: var(--color-primary-200);
+    color: rgba(255, 255, 255, 0.75);
     font-weight: 700;
   }
 }

@@ -14,15 +14,27 @@ import BottomNav from '@/components/BottomNav.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 </script>
 
-<style>
+<style lang="scss">
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  padding-bottom: 56px;
+}
+
+#app {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
 }
 
 /* Route slide-fade transition */

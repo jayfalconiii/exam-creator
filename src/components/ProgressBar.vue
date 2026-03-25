@@ -18,7 +18,7 @@ const props = defineProps<{
 const pct = computed(() => (props.total > 0 ? (props.current / props.total) * 100 : 0))
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .progress-bar {
   display: flex;
   align-items: center;

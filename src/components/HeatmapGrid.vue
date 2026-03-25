@@ -11,7 +11,7 @@ import type { TopicWithScore } from '@/stores/topics'
 defineProps<{ topics: TopicWithScore[] }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .heatmap-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

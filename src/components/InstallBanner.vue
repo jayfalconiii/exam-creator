@@ -48,7 +48,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .install-banner {
   position: fixed;
   bottom: 64px;
