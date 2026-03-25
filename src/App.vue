@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watchEffect } from 'vue'
+import { watchEffect } from 'vue'
 import '@/assets/tokens.css'
 import Toast from 'primevue/toast'
 import BottomNav from '@/components/BottomNav.vue'
@@ -16,10 +16,6 @@ import InstallBanner from '@/components/InstallBanner.vue'
 import { useSettingsStore } from '@/stores/settings'
 
 const settingsStore = useSettingsStore()
-
-onMounted(() => {
-  settingsStore.loadFromDB()
-})
 
 watchEffect(() => {
   if (settingsStore.theme === 'dark') {

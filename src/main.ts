@@ -42,6 +42,7 @@ const OrangePreset = definePreset(Aura, {
       preset: OrangePreset,
       options: {
         cssLayer: false,
+        darkModeSelector: '[data-theme="dark"]',
       },
     },
   })
