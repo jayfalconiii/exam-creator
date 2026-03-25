@@ -26,13 +26,6 @@
 
       <footer class="session-view__footer" v-if="currentAnswer !== null">
         <Button
-          v-if="isStudyMode && !feedbackDismissed"
-          class="session-view__btn"
-          :label="isLast ? 'Finish' : 'Next'"
-          @click="feedbackDismissed = true"
-        />
-        <Button
-          v-else-if="!isStudyMode || feedbackDismissed"
           class="session-view__btn"
           :label="isLast ? 'Finish' : 'Next'"
           @click="handleAdvance"
@@ -58,7 +51,6 @@ const sessionStore = useSessionStore()
 const topicsStore = useTopicsStore()
 
 const currentAnswer = ref<number | null>(null)
-const feedbackDismissed = ref(false)
 const secondsLeft = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 
@@ -98,12 +90,10 @@ async function loadQueue() {
 async function handleSelect(index: number) {
   if (currentAnswer.value !== null) return
   currentAnswer.value = index
-  feedbackDismissed.value = false
 
   const q = currentQuestion.value!
   const answer = await submitAnswer(q.id!, index, 0, q.correctIndex)
   sessionStore.recordAnswer(answer)
-
 }
 
 async function handleAdvance() {
@@ -112,7 +102,6 @@ async function handleAdvance() {
   } else {
     sessionStore.advance()
     currentAnswer.value = null
-    feedbackDismissed.value = false
   }
 }
 
