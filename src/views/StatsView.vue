@@ -277,7 +277,7 @@ function handleDelete(session: Session) {
     z-index: 1;
     padding: 1rem;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
