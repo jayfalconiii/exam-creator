@@ -23,7 +23,7 @@
             @click="toggleAll"
           >All</Button>
           <Button
-            v-for="topic in TOPIC_DEFINITIONS"
+            v-for="topic in topics"
             :key="topic.topicId"
             rounded
             type="button"
@@ -112,13 +112,12 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import { useToast } from 'primevue/usetoast'
-import { TOPIC_DEFINITIONS } from '@/data/topics'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
 import { useNetwork } from '@/composables/useNetwork'
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator'
 import { db } from '@/db/db'
-import type { SessionMode, FeedbackMode } from '@/types/index'
+import type { SessionMode, FeedbackMode, Topic } from '@/types/index'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
@@ -127,6 +126,7 @@ const { isOnline } = useNetwork()
 const toast = useToast()
 
 const isGenerating = ref(false)
+const topics = ref<Omit<Topic, 'id'>[]>([])
 const selectedTopics = ref<string[]>([])
 const selectedMode = ref<SessionMode>('mixed')
 const questionCount = ref(10)
@@ -135,8 +135,8 @@ const timerEnabled = ref(false)
 const timerSeconds = ref(90)
 
 const feedbackMode = computed<FeedbackMode>(() => (isExamMode.value ? 'exam' : 'study'))
-const allTopicIds = TOPIC_DEFINITIONS.map((t) => t.topicId)
-const allSelected = computed(() => selectedTopics.value.length === allTopicIds.length)
+const allTopicIds = computed(() => topics.value.map((t) => t.topicId))
+const allSelected = computed(() => selectedTopics.value.length === allTopicIds.value.length)
 const formattedTimer = computed(() => {
   const m = Math.floor(timerSeconds.value / 60)
   const s = timerSeconds.value % 60
@@ -151,7 +151,7 @@ const modes = [
 ]
 
 function toggleAll() {
-  selectedTopics.value = allSelected.value ? [] : [...allTopicIds]
+  selectedTopics.value = allSelected.value ? [] : [...allTopicIds.value]
 }
 
 function toggleTopic(topicId: string) {
@@ -164,6 +164,7 @@ function toggleTopic(topicId: string) {
 }
 
 onMounted(async () => {
+  topics.value = await db.topics.toArray()
   const rows = await db.settings.where('key').startsWith('session_').toArray()
   for (const row of rows) {
     if (row.key === 'session_topicIds') selectedTopics.value = JSON.parse(row.value)
