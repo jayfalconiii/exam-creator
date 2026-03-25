@@ -106,10 +106,12 @@ import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
 import RadioButton from 'primevue/radiobutton'
 import Button from 'primevue/button'
+import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Topic } from '@/types'
 
 const router = useRouter()
+const toast = useToast()
 
 const topics = ref<Topic[]>([])
 const topicId = ref<string>('')
@@ -149,6 +151,7 @@ async function handleSave() {
     lastSeenAt: null,
     createdAt: Date.now(),
   })
+  toast.add({ severity: 'success', summary: 'Question added', detail: 'Your question has been saved.', life: 3000 })
   router.push('/library')
 }
 </script>
