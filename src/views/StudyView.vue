@@ -21,7 +21,9 @@
             class="study-view__chip"
             :class="{ 'study-view__chip--selected': allSelected }"
             @click="toggleAll"
-          >All</Button>
+          >
+            All
+          </Button>
           <Button
             v-for="topic in topics"
             :key="topic.topicId"
@@ -31,7 +33,9 @@
             class="study-view__chip"
             :class="{ 'study-view__chip--selected': selectedTopics.includes(topic.topicId) }"
             @click="toggleTopic(topic.topicId)"
-          >{{ topic.name }}</Button>
+          >
+            {{ topic.name }}
+          </Button>
         </div>
       </section>
 

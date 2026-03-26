@@ -75,9 +75,9 @@
             class="question-form-view__radio-item"
           >
             <RadioButton
+              v-model="correctIndex"
               :input-id="`correct-${i}`"
               :value="i"
-              v-model="correctIndex"
             />
             <label :for="`correct-${i}`">{{ optionLabels[i] }}</label>
           </div>

@@ -1,8 +1,8 @@
 <template>
   <div v-if="visible" class="install-banner">
     <p class="install-banner__text">Add to Home Screen for the best experience</p>
-    <Button label="Install" size="small" @click="install" class="install-banner__install" />
-    <Button label="Dismiss" size="small" variant="outlined" @click="dismiss" class="install-banner__dismiss" />
+    <Button label="Install" size="small" class="install-banner__install" @click="install" />
+    <Button label="Dismiss" size="small" variant="outlined" class="install-banner__dismiss" @click="dismiss" />
   </div>
 </template>
 
