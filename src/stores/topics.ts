@@ -6,7 +6,7 @@ import { effectiveScore, scoreToColor } from '@/composables/useSpacedRepetition'
 
 export interface TopicWithScore extends Topic {
   effectiveScore: number
-  color: 'green' | 'yellow' | 'red' | 'gray'
+  scoreColor: 'green' | 'yellow' | 'red' | 'gray'
 }
 
 export const useTopicsStore = defineStore('topics', () => {
@@ -18,7 +18,7 @@ export const useTopicsStore = defineStore('topics', () => {
       return {
         ...t,
         effectiveScore: score,
-        color: scoreToColor(score, t.lastReviewedAt),
+        scoreColor: scoreToColor(score, t.lastReviewedAt),
       }
     }),
   )

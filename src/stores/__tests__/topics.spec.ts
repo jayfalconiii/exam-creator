@@ -55,7 +55,7 @@ describe('useTopicsStore', () => {
     await store.refreshTopics()
     for (const t of store.topicsWithEffectiveScore) {
       expect(t.effectiveScore).toBe(0)
-      expect(t.color).toBe('gray')
+      expect(t.scoreColor).toBe('gray')
     }
   })
 

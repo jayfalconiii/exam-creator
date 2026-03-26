@@ -47,6 +47,18 @@ export class ExamDB extends Dexie {
         topic.color = KNOWN_TOPIC_COLORS[topic.topicId] ?? FALLBACK_COLOR
       })
     })
+    this.version(3).stores({
+      questions: '++id, topicId, errorCount, lastSeenAt',
+      topics: '++id, &topicId',
+      sessions: '++id, startedAt, completedAt, mode',
+      settings: '&key',
+    }).upgrade(async (tx) => {
+      await tx.table('topics').toCollection().modify((topic) => {
+        if (!topic.color) {
+          topic.color = KNOWN_TOPIC_COLORS[topic.topicId] ?? FALLBACK_COLOR
+        }
+      })
+    })
   }
 }
 
