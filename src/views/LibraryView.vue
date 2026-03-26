@@ -167,6 +167,9 @@
               Row {{ err.index }}: {{ err.fields.join(', ') }}
             </li>
           </ul>
+          <p v-if="newTopicIdsFromJson.length > 0" class="import-dialog__new-topics-notice">
+            {{ newTopicIdsFromJson.length }} new topic(s) will be created: {{ newTopicIdsFromJson.join(', ') }}
+          </p>
         </div>
       </div>
 
@@ -205,6 +208,9 @@
               Row {{ err.index }}: {{ err.fields.join(', ') }}
             </li>
           </ul>
+          <p v-if="newTopicIdsFromCsv.length > 0" class="import-dialog__new-topics-notice">
+            {{ newTopicIdsFromCsv.length }} new topic(s) will be created: {{ newTopicIdsFromCsv.join(', ') }}
+          </p>
         </div>
       </div>
 
@@ -237,6 +243,7 @@ import Textarea from 'primevue/textarea'
 import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
+import { pickTopicColor } from '@/utils/topicColors'
 
 const DUPLICATES_SENTINEL = '__duplicates__'
 
@@ -423,6 +430,8 @@ interface PreviewResult {
 }
 
 const previewResult = ref<PreviewResult | null>(null)
+const newTopicIdsFromJson = ref<string[]>([])
+const newTopicIdsFromCsv = ref<string[]>([])
 
 const exampleShape = `[{ "topicId": "ec2", "text": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }]`
 
@@ -473,9 +482,17 @@ function validateItem(item: unknown, index: number): { valid: Omit<Question, 'id
   }
 }
 
-function handlePreview() {
+async function detectNewTopicIds(validRows: Omit<Question, 'id'>[]): Promise<string[]> {
+  const existingTopics = await db.topics.toArray()
+  const existingIds = new Set(existingTopics.map((t) => t.topicId))
+  const uniqueFromImport = [...new Set(validRows.map((q) => q.topicId))]
+  return uniqueFromImport.filter((id) => !existingIds.has(id))
+}
+
+async function handlePreview() {
   parseError.value = null
   previewResult.value = null
+  newTopicIdsFromJson.value = []
 
   const trimmed = jsonInput.value.trim()
   if (!trimmed) {
@@ -511,11 +528,16 @@ function handlePreview() {
   })
 
   previewResult.value = { valid, invalid }
+
+  if (valid.length > 0) {
+    newTopicIdsFromJson.value = await detectNewTopicIds(valid)
+  }
 }
 
 function resetPreview() {
   parseError.value = null
   previewResult.value = null
+  newTopicIdsFromJson.value = []
 }
 
 function switchTab(tab: 'json' | 'csv') {
@@ -527,8 +549,10 @@ function resetImportState() {
   jsonInput.value = ''
   parseError.value = null
   previewResult.value = null
+  newTopicIdsFromJson.value = []
   csvParseError.value = null
   csvPreviewResult.value = null
+  newTopicIdsFromCsv.value = []
   if (csvFileInput.value) csvFileInput.value.value = ''
 }
 
@@ -536,11 +560,12 @@ function handleCsvFileChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   csvParseError.value = null
   csvPreviewResult.value = null
+  newTopicIdsFromCsv.value = []
 
   if (!file) return
 
   const reader = new FileReader()
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     const text = (event.target?.result as string) ?? ''
     const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '')
 
@@ -580,18 +605,45 @@ function handleCsvFileChange(e: Event) {
     })
 
     csvPreviewResult.value = { valid, invalid }
+
+    if (valid.length > 0) {
+      newTopicIdsFromCsv.value = await detectNewTopicIds(valid)
+    }
   }
 
   reader.readAsText(file)
 }
 
+async function insertNewTopics(newTopicIds: string[]): Promise<void> {
+  if (newTopicIds.length === 0) return
+  const existingTopics = await db.topics.toArray()
+  const existingColors = existingTopics.map((t) => t.color)
+  for (const topicId of newTopicIds) {
+    const color = pickTopicColor(existingColors)
+    existingColors.push(color)
+    await db.topics.add({
+      topicId,
+      name: topicId,
+      color,
+      rawScore: 0,
+      lastReviewedAt: null,
+      totalSessions: 0,
+    })
+  }
+}
+
 async function handleCsvImport() {
   if (!csvPreviewResult.value || csvPreviewResult.value.valid.length === 0) return
+
+  await insertNewTopics(newTopicIdsFromCsv.value)
 
   const toInsert = csvPreviewResult.value.valid.map((q) => toRaw(q))
   await db.questions.bulkAdd(toInsert as Question[])
 
-  questions.value = await db.questions.toArray()
+  ;[questions.value, topics.value] = await Promise.all([
+    db.questions.toArray(),
+    db.topics.toArray(),
+  ])
 
   const count = toInsert.length
   toast.add({
@@ -612,10 +664,15 @@ function closeDialog() {
 async function handleImport() {
   if (!previewResult.value || previewResult.value.valid.length === 0) return
 
+  await insertNewTopics(newTopicIdsFromJson.value)
+
   const toInsert = previewResult.value.valid.map((q) => toRaw(q))
   await db.questions.bulkAdd(toInsert as Question[])
 
-  questions.value = await db.questions.toArray()
+  ;[questions.value, topics.value] = await Promise.all([
+    db.questions.toArray(),
+    db.topics.toArray(),
+  ])
 
   const count = toInsert.length
   toast.add({
@@ -921,6 +978,16 @@ async function handleImport() {
   &__error-item {
     font-size: 0.8125rem;
     color: var(--color-danger, #dc2626);
+  }
+
+  &__new-topics-notice {
+    margin: var(--space-2) 0 0;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-warning-light, #fffbeb);
+    border: 1px solid var(--color-warning, #f59e0b);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    color: var(--color-text);
   }
 }
 </style>
