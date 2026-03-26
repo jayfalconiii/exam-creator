@@ -12,14 +12,29 @@
         <label class="question-form-view__label" for="topic-select">Topic</label>
         <Select
           id="topic-select"
-          v-model="topicId"
-          :options="topics"
-          option-label="name"
-          option-value="topicId"
+          v-model="topicSelection"
+          :options="topicOptions"
+          option-label="label"
+          option-value="value"
           placeholder="Select a topic"
           class="question-form-view__select"
+          @change="onTopicSelectionChange"
         />
         <span v-if="errors.topicId" class="question-form-view__error">{{ errors.topicId }}</span>
+
+        <div v-if="isCreatingNewTopic" class="question-form-view__new-topic">
+          <InputText
+            v-model="newTopicName"
+            placeholder="Topic name"
+            class="question-form-view__new-topic-input"
+          />
+          <span class="question-form-view__new-topic-preview">
+            ID: <code>{{ derivedTopicId || '—' }}</code>
+          </span>
+          <span v-if="topicIdCollision" class="question-form-view__error">
+            Topic ID already exists
+          </span>
+        </div>
       </div>
 
       <div class="question-form-view__field">
@@ -92,6 +107,7 @@
         <Button
           type="submit"
           label="Save"
+          :disabled="topicIdCollision"
         />
       </div>
     </form>
@@ -101,14 +117,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import Select from 'primevue/select'
+import Select, { type SelectChangeEvent } from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import InputText from 'primevue/inputtext'
 import RadioButton from 'primevue/radiobutton'
 import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
+import { pickTopicColor } from '@/utils/topicColors'
 import type { Topic } from '@/types'
+
+const CREATE_NEW_VALUE = '__create_new__'
 
 const router = useRouter()
 const route = useRoute()
@@ -118,6 +137,10 @@ const isEditMode = computed(() => !!route.params.id)
 
 const topics = ref<Topic[]>([])
 const topicId = ref<string>('')
+const topicSelection = ref<string>('')
+const isCreatingNewTopic = ref(false)
+const newTopicName = ref('')
+
 const text = ref('')
 const options = ref(['', '', '', ''])
 const correctIndex = ref<number | null>(null)
@@ -125,6 +148,40 @@ const explanation = ref('')
 const optionLabels = ['A', 'B', 'C', 'D']
 
 const errors = ref<Record<string, string>>({})
+
+const topicOptions = computed(() => {
+  const existing = topics.value.map((t) => ({ label: t.name, value: t.topicId }))
+  return [...existing, { label: '＋ Create new topic', value: CREATE_NEW_VALUE }]
+})
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+const derivedTopicId = computed(() => slugify(newTopicName.value))
+
+const topicIdCollision = computed(() => {
+  if (!isCreatingNewTopic.value || !derivedTopicId.value) return false
+  return topics.value.some((t) => t.topicId === derivedTopicId.value)
+})
+
+function onTopicSelectionChange(e: SelectChangeEvent) {
+  const val = e.value
+  if (val === CREATE_NEW_VALUE) {
+    isCreatingNewTopic.value = true
+    topicId.value = ''
+    newTopicName.value = ''
+  } else {
+    isCreatingNewTopic.value = false
+    newTopicName.value = ''
+    topicId.value = val
+  }
+}
 
 onMounted(async () => {
   topics.value = await db.topics.toArray()
@@ -138,6 +195,7 @@ onMounted(async () => {
       return
     }
     topicId.value = question.topicId
+    topicSelection.value = question.topicId
     text.value = question.text
     options.value = [...question.options]
     correctIndex.value = question.correctIndex
@@ -147,7 +205,8 @@ onMounted(async () => {
 
 function validate(): boolean {
   const e: Record<string, string> = {}
-  if (!topicId.value) e.topicId = 'Topic is required.'
+  const resolvedTopicId = isCreatingNewTopic.value ? derivedTopicId.value : topicId.value
+  if (!resolvedTopicId) e.topicId = 'Topic is required.'
   if (!text.value.trim()) e.text = 'Question text is required.'
   if (options.value.some((o) => !o.trim())) e.options = 'All four options are required.'
   if (correctIndex.value === null) e.correctIndex = 'Select the correct answer.'
@@ -158,11 +217,26 @@ function validate(): boolean {
 
 async function handleSave() {
   if (!validate()) return
+  if (topicIdCollision.value) return
+
+  const resolvedTopicId = isCreatingNewTopic.value ? derivedTopicId.value : topicId.value
+
+  if (isCreatingNewTopic.value) {
+    const existingColors = topics.value.map((t) => t.color)
+    await db.topics.add({
+      topicId: resolvedTopicId,
+      name: newTopicName.value.trim(),
+      color: pickTopicColor(existingColors),
+      rawScore: 0,
+      lastReviewedAt: null,
+      totalSessions: 0,
+    })
+  }
 
   if (isEditMode.value) {
     const id = Number(route.params.id)
     await db.questions.update(id, {
-      topicId: topicId.value,
+      topicId: resolvedTopicId,
       text: text.value.trim(),
       options: options.value.map((o) => o.trim()),
       correctIndex: correctIndex.value as number,
@@ -171,7 +245,7 @@ async function handleSave() {
     toast.add({ severity: 'success', summary: 'Question updated', detail: 'Changes saved.', life: 3000 })
   } else {
     await db.questions.add({
-      topicId: topicId.value,
+      topicId: resolvedTopicId,
       text: text.value.trim(),
       options: options.value.map((o) => o.trim()),
       correctIndex: correctIndex.value as number,
@@ -243,6 +317,26 @@ async function handleSave() {
 
   &__textarea {
     width: 100%;
+  }
+
+  &__new-topic {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+
+    &-input {
+      width: 100%;
+    }
+
+    &-preview {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+
+      code {
+        font-family: monospace;
+      }
+    }
   }
 
   &__options {
