@@ -19,7 +19,7 @@ describe('BottomNav', () => {
       global: { plugins: [router] },
     })
     const tabs = wrapper.findAll('a')
-    expect(tabs).toHaveLength(4)
+    expect(tabs).toHaveLength(5)
   })
 
   it('has links to /, /topics, /study, /stats', async () => {

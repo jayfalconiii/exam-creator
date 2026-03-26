@@ -115,8 +115,13 @@ describe('StudyView', () => {
     expect(timerToggle.exists()).toBe(true)
     expect(wrapper.find('[data-testid="timer-seconds"]').exists()).toBe(false)
 
-    ;(timerToggle.element as HTMLInputElement).checked = true
-    await timerToggle.trigger('change')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
     await flushPromises()
     expect(wrapper.find('[data-testid="timer-seconds"]').exists()).toBe(true)
   })

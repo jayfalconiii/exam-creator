@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
+import ConfirmationService from 'primevue/confirmationservice'
 import { db } from '@/db/db'
 import TopicDetailView from '@/views/TopicDetailView.vue'
 import type { Topic } from '@/types'
@@ -64,7 +65,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     expect(wrapper.text()).toContain('EC2')
@@ -78,7 +79,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     expect(wrapper.find('[data-test="raw-score"]').exists()).toBe(true)
@@ -124,7 +125,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     const el = wrapper.find('[data-test="total-questions"]')
@@ -172,7 +173,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     const el = wrapper.find('[data-test="difficult-count"]')
@@ -205,7 +206,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     const items = wrapper.findAll('[data-test="session-history-item"]')
@@ -226,7 +227,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     const item = wrapper.find('[data-test="session-history-item"]')
@@ -237,7 +238,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/nonexistent')
     await router.isReady()
     mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     expect(router.currentRoute.value.path).toBe('/topics')
@@ -248,7 +249,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     expect(wrapper.find('.empty-state').exists()).toBe(true)
@@ -258,7 +259,7 @@ describe('TopicDetailView', () => {
     await router.push('/topics/ec2')
     await router.isReady()
     const wrapper = mount(TopicDetailView, {
-      global: { plugins: [router, createPinia()] },
+      global: { plugins: [router, createPinia(), ConfirmationService] },
     })
     await flush()
     expect(wrapper.find('.empty-state').exists()).toBe(false)
