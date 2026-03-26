@@ -27,6 +27,15 @@
       </div>
     </section>
 
+    <div class="topic-detail-view__actions">
+      <Button
+        label="Delete Topic"
+        severity="danger"
+        outlined
+        @click="handleDelete"
+      />
+    </div>
+
     <EmptyState
       v-if="totalQuestions === 0"
       icon="🧩"
@@ -57,6 +66,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
+import Button from 'primevue/button'
+import { useConfirm } from 'primevue/useconfirm'
 import { db } from '@/db/db'
 import { effectiveScore } from '@/composables/useSpacedRepetition'
 import EmptyState from '@/components/EmptyState.vue'
@@ -64,6 +75,7 @@ import type { Topic, Session } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
+const confirm = useConfirm()
 
 const topic = ref<Topic | null>(null)
 const totalQuestions = ref(0)
@@ -81,6 +93,28 @@ function sessionPct(session: Session): number {
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString()
+}
+
+function handleDelete() {
+  const topicId = route.params.id as string
+  const count = totalQuestions.value
+  const message =
+    count > 0
+      ? `This topic has ${count} question(s). Deleting it will permanently remove all of them. Continue?`
+      : 'Are you sure you want to delete this topic?'
+
+  confirm.require({
+    header: 'Delete Topic',
+    message,
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    acceptProps: { severity: 'danger' },
+    accept: async () => {
+      await db.questions.where('topicId').equals(topicId).delete()
+      await db.topics.where('topicId').equals(topicId).delete()
+      router.push('/topics')
+    },
+  })
 }
 
 onMounted(async () => {
@@ -181,6 +215,12 @@ onMounted(async () => {
     font-weight: 700;
     margin-top: 0.25rem;
     color: var(--color-text);
+  }
+
+  .topic-detail-view__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
   }
 
   .topic-detail-view__history-title {
