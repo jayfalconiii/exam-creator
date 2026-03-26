@@ -1,6 +1,6 @@
 <template>
   <main class="session-view">
-    <header class="session-view__header" v-if="sessionStore.status === 'active'">
+    <header v-if="sessionStore.status === 'active'" class="session-view__header">
       <ProgressBar :current="sessionStore.currentIndex" :total="sessionStore.queue.length" />
       <p v-if="config?.timerEnabled" class="session-view__timer">{{ formattedTime }}</p>
     </header>
@@ -24,7 +24,7 @@
         @select="onSelect"
       />
 
-      <footer class="session-view__footer" v-if="currentAnswer !== null">
+      <footer v-if="currentAnswer !== null" class="session-view__footer">
         <Button
           class="session-view__btn"
           :label="isLast ? 'Finish' : 'Next'"
@@ -71,7 +71,7 @@ async function loadQueue() {
     router.replace('/study')
     return
   }
-  sessionStore.status = 'loading' as any
+  sessionStore.status = 'loading'
   const queue = await buildQuestionQueue(config.value)
   sessionStore.startSession(queue)
 

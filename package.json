@@ -8,7 +8,8 @@
     "dev:host": "vite --host",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint . --ext .vue,.ts,.tsx"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -21,16 +22,22 @@
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/test-utils": "^2.4.0",
+    "eslint": "^10.1.0",
     "fake-indexeddb": "^6.2.5",
+    "jiti": "^2.6.1",
     "jsdom": "^24.0.0",
     "sass": "^1.98.0",
     "typescript": "^5.4.0",
+    "typescript-eslint": "^8.57.2",
     "vite": "^6.4.1",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-vue-devtools": "^8.1.1",
     "vitest": "^1.4.0",
+    "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "^2.0.0"
   }
 }

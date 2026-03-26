@@ -22,7 +22,7 @@ export async function buildQuestionQueue(
   config: SessionConfig,
   db: ExamDB = defaultDb,
 ): Promise<Question[]> {
-  let query = db.questions.where('topicId').anyOf(config.topicIds)
+  const query = db.questions.where('topicId').anyOf(config.topicIds)
 
   let questions = await query.toArray()
 
