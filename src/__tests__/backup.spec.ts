@@ -12,4 +12,12 @@ describe('detectBackupFormat', () => {
     expect(detectBackupFormat([])).toBe('questions')
     expect(detectBackupFormat([{ text: 'q1' }])).toBe('questions')
   })
+
+  it("returns 'unknown' for unrecognised inputs (string, null, number, partial object)", () => {
+    expect(detectBackupFormat('not valid')).toBe('unknown')
+    expect(detectBackupFormat(null)).toBe('unknown')
+    expect(detectBackupFormat(42)).toBe('unknown')
+    expect(detectBackupFormat({ version: 1 })).toBe('unknown')
+    expect(detectBackupFormat({ questions: [], topics: [] })).toBe('unknown')
+  })
 })
