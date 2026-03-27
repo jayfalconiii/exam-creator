@@ -233,37 +233,26 @@ Closes #<NUMBER>
 PR_BODY_END
 ```
 
-## Step 7 — Clean up the worktree
-
-Clean up the worktree so it doesn't linger in VS Code's source control views.
-
-```bash
-WORKTREE_PATH=$(pwd)
-cd /Users/jayfalcon-arcanys/Developer/side-projects/exam-creator
-git worktree remove "$WORKTREE_PATH" --force
-git worktree prune
-```
-
-Confirm removal by running `git worktree list` and report the result.
-
 ## Hard constraints
 - Never commit directly to main
 - Never skip tests, never force-push
 - Never use watch or watchEffect in Vue components
 - Never use relative ../../ imports — always use @/
 - Never add features not described in the issue
-- Do NOT create the PR — push the branch, output the summary, clean up the worktree, and stop
+- Do NOT create the PR and do NOT clean up the worktree — the calling context handles both
 - If blocked or uncertain, describe the blocker clearly and stop — do not guess or workaround silently
 ```
 
 ---
 
-## Step 6 (main context) — Create PRs after all sub-agents complete
+## Step 6 (main context) — Create PRs and clean up worktrees
 
-Once all sub-agents have finished and returned their summaries, create one PR per issue using `gh pr create`. Use the `BRANCH`, `PR_TITLE`, and `PR_BODY_START...PR_BODY_END` from each sub-agent's output.
+Once all sub-agents have finished and returned their summaries:
 
-For each issue, write the PR body to a temp file using the Write tool, then run:
+**For each sub-agent:**
 
+1. Write the PR body to a temp file using the Write tool
+2. Create the PR:
 ```bash
 gh pr create \
   --title "<PR_TITLE from sub-agent>" \
@@ -271,5 +260,15 @@ gh pr create \
   --head <BRANCH from sub-agent> \
   --base main
 ```
+3. Delete the temp file
+4. Remove the worktree using the path from the task notification's `<worktreePath>`:
+```bash
+git -C /Users/jayfalcon-arcanys/Developer/side-projects/exam-creator \
+  worktree remove <worktreePath> --force
+```
+5. After all worktrees are removed, prune once:
+```bash
+git -C /Users/jayfalcon-arcanys/Developer/side-projects/exam-creator worktree prune
+```
 
-Delete the temp file after each PR is created. Output all PR URLs to the user.
+Output all PR URLs to the user.
