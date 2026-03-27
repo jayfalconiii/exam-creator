@@ -45,6 +45,7 @@
   height: calc(56px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--color-surface);
+  z-index: 100;
   border-top: 1px solid var(--color-border);
 }
 
