@@ -86,13 +86,20 @@
         </div>
         <template v-if="timerEnabled">
           <span class="study-view__count-value" data-testid="timer-seconds">{{ formattedTimer }}</span>
-          <Slider
-            v-model="timerSeconds"
-            :min="30"
-            :max="600"
-            :step="30"
-            class="study-view__slider"
-          />
+          <div class="timer-presets">
+            <Button
+              v-for="preset in TIMER_PRESETS"
+              :key="preset.seconds"
+              rounded
+              type="button"
+              :data-testid="`timer-preset-${preset.seconds}`"
+              class="timer-presets__btn"
+              :class="{ 'timer-presets__btn--active': timerSeconds === preset.seconds }"
+              @click="timerSeconds = preset.seconds"
+            >
+              {{ preset.label }}
+            </Button>
+          </div>
         </template>
       </section>
 
@@ -111,10 +118,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
-import Slider from 'primevue/slider'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
+import Slider from 'primevue/slider'
 import { useToast } from 'primevue/usetoast'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
@@ -136,7 +143,7 @@ const selectedMode = ref<SessionMode>('mixed')
 const questionCount = ref(10)
 const isExamMode = ref(false)
 const timerEnabled = ref(false)
-const timerSeconds = ref(90)
+const timerSeconds = ref(300)
 
 const feedbackMode = computed<FeedbackMode>(() => (isExamMode.value ? 'exam' : 'study'))
 const allTopicIds = computed(() => topics.value.map((t) => t.topicId))
@@ -146,6 +153,21 @@ const formattedTimer = computed(() => {
   const s = timerSeconds.value % 60
   return s === 0 ? `${m}m` : `${m}m ${s}s`
 })
+
+const TIMER_PRESETS = [
+  { label: '30s', seconds: 30 },
+  { label: '1m', seconds: 60 },
+  { label: '2m', seconds: 120 },
+  { label: '3m', seconds: 180 },
+  { label: '5m', seconds: 300 },
+  { label: '10m', seconds: 600 },
+  { label: '15m', seconds: 900 },
+  { label: '30m', seconds: 1800 },
+  { label: '45m', seconds: 2700 },
+  { label: '1h', seconds: 3600 },
+  { label: '1.5h', seconds: 5400 },
+  { label: '2h', seconds: 7200 },
+]
 
 const modes = [
   { value: 'review' as SessionMode, label: 'Review' },
@@ -176,7 +198,10 @@ onMounted(async () => {
     if (row.key === 'session_questionCount') questionCount.value = Number(row.value)
     if (row.key === 'session_feedbackMode') isExamMode.value = row.value === 'exam'
     if (row.key === 'session_timerEnabled') timerEnabled.value = row.value === 'true'
-    if (row.key === 'session_timerSeconds') timerSeconds.value = Number(row.value)
+    if (row.key === 'session_timerSeconds') {
+      const saved = Number(row.value)
+      timerSeconds.value = TIMER_PRESETS.some((p) => p.seconds === saved) ? saved : 300
+    }
   }
 })
 
@@ -321,6 +346,27 @@ async function startSession() {
     align-self: flex-start;
     min-height: 44px;
     margin-top: 1rem;
+  }
+}
+
+.timer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.25rem;
+
+  &__btn {
+    min-height: 36px;
+    padding: 0 0.75rem;
+    border: 1.5px solid var(--color-primary) !important;
+    background: transparent !important;
+    color: var(--color-primary) !important;
+    font-size: 0.8125rem;
+    font-weight: 500;
+
+    &--active {
+      background: var(--color-primary) !important;
+      color: var(--color-text-on-primary) !important;
+    }
   }
 }
 

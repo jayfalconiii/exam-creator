@@ -152,6 +152,104 @@ describe('StudyView', () => {
     expect(JSON.parse(topicsSetting!.value)).toContain('ec2')
   })
 
+  it('renders 12 preset timer buttons when timer is enabled', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    const presetBtns = wrapper.findAll('[data-testid^="timer-preset-"]')
+    expect(presetBtns).toHaveLength(12)
+  })
+
+  it('clicking a preset button updates the timer display', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    await wrapper.find('[data-testid="timer-preset-300"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('5m')
+  })
+
+  it('selected preset button gets active class; others do not', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    await wrapper.find('[data-testid="timer-preset-600"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="timer-preset-600"]').classes()).toContain('timer-presets__btn--active')
+    expect(wrapper.find('[data-testid="timer-preset-300"]').classes()).not.toContain('timer-presets__btn--active')
+  })
+
+  it('default timerSeconds is 300 (5m)', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('5m')
+  })
+
+  it('does not render a slider in the timer section', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    // Only the question-count-slider should exist; no slider in timer section
+    const allSliders = wrapper.findAll('.p-slider')
+    const questionCountSlider = wrapper.find('[data-testid="question-count-slider"]')
+    expect(questionCountSlider.exists()).toBe(true)
+    // All sliders present should only be the question count slider
+    expect(allSliders.length).toBeLessThanOrEqual(1)
+  })
+
   it('config saves to db and persists question count', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
