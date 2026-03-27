@@ -121,6 +121,7 @@ import Skeleton from 'primevue/skeleton'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
+import Slider from 'primevue/slider'
 import { useToast } from 'primevue/usetoast'
 import { useSessionStore } from '@/stores/session'
 import { useSettingsStore } from '@/stores/settings'
@@ -142,7 +143,7 @@ const selectedMode = ref<SessionMode>('mixed')
 const questionCount = ref(10)
 const isExamMode = ref(false)
 const timerEnabled = ref(false)
-const timerSeconds = ref(90)
+const timerSeconds = ref(300)
 
 const feedbackMode = computed<FeedbackMode>(() => (isExamMode.value ? 'exam' : 'study'))
 const allTopicIds = computed(() => topics.value.map((t) => t.topicId))

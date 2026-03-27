@@ -211,7 +211,7 @@ describe('StudyView', () => {
     expect(wrapper.find('[data-testid="timer-preset-300"]').classes()).not.toContain('timer-presets__btn--active')
   })
 
-  it('default timerSeconds is 90 (1m 30s)', async () => {
+  it('default timerSeconds is 300 (5m)', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
 
@@ -225,7 +225,7 @@ describe('StudyView', () => {
     }
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('1m 30s')
+    expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('5m')
   })
 
   it('does not render a slider in the timer section', async () => {
