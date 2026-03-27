@@ -170,6 +170,34 @@ describe('Export Backup', () => {
     expect(btn.exists()).toBe(true)
     expect(btn.text()).toContain('Export Backup')
   })
+
+  it('clicking Export Backup calls buildBackup and triggers a download', async () => {
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
+    URL.revokeObjectURL = vi.fn()
+
+    const mockClick = vi.fn()
+    const mockAnchor = { href: '', download: '', click: mockClick } as unknown as HTMLAnchorElement
+    const originalCreate = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(
+      (tag: string, ...args: unknown[]) => {
+        if (tag === 'a') {
+          createElementSpy.mockImplementation((t: string, ...a: unknown[]) => originalCreate(t, ...(a as [])))
+          return mockAnchor
+        }
+        return originalCreate(tag, ...(args as []))
+      },
+    )
+
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    await wrapper.find('button[data-testid="export-backup-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(buildBackup).toHaveBeenCalled()
+    expect(mockClick).toHaveBeenCalled()
+
+    createElementSpy.mockRestore()
+  })
 })
 
 describe('HomeView gear icon', () => {
