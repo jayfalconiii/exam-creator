@@ -198,7 +198,10 @@ onMounted(async () => {
     if (row.key === 'session_questionCount') questionCount.value = Number(row.value)
     if (row.key === 'session_feedbackMode') isExamMode.value = row.value === 'exam'
     if (row.key === 'session_timerEnabled') timerEnabled.value = row.value === 'true'
-    if (row.key === 'session_timerSeconds') timerSeconds.value = Number(row.value)
+    if (row.key === 'session_timerSeconds') {
+      const saved = Number(row.value)
+      timerSeconds.value = TIMER_PRESETS.some((p) => p.seconds === saved) ? saved : 300
+    }
   }
 })
 
