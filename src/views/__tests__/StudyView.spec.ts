@@ -190,6 +190,27 @@ describe('StudyView', () => {
     expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('5m')
   })
 
+  it('selected preset button gets active class; others do not', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    await wrapper.find('[data-testid="timer-preset-600"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="timer-preset-600"]').classes()).toContain('timer-presets__btn--active')
+    expect(wrapper.find('[data-testid="timer-preset-300"]').classes()).not.toContain('timer-presets__btn--active')
+  })
+
   it('config saves to db and persists question count', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
