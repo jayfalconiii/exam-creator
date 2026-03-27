@@ -86,13 +86,20 @@
         </div>
         <template v-if="timerEnabled">
           <span class="study-view__count-value" data-testid="timer-seconds">{{ formattedTimer }}</span>
-          <Slider
-            v-model="timerSeconds"
-            :min="30"
-            :max="600"
-            :step="30"
-            class="study-view__slider"
-          />
+          <div class="timer-presets">
+            <Button
+              v-for="preset in TIMER_PRESETS"
+              :key="preset.seconds"
+              rounded
+              type="button"
+              :data-testid="`timer-preset-${preset.seconds}`"
+              class="timer-presets__btn"
+              :class="{ 'timer-presets__btn--active': timerSeconds === preset.seconds }"
+              @click="timerSeconds = preset.seconds"
+            >
+              {{ preset.label }}
+            </Button>
+          </div>
         </template>
       </section>
 
@@ -111,7 +118,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Skeleton from 'primevue/skeleton'
-import Slider from 'primevue/slider'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
@@ -146,6 +152,21 @@ const formattedTimer = computed(() => {
   const s = timerSeconds.value % 60
   return s === 0 ? `${m}m` : `${m}m ${s}s`
 })
+
+const TIMER_PRESETS = [
+  { label: '30s', seconds: 30 },
+  { label: '1m', seconds: 60 },
+  { label: '2m', seconds: 120 },
+  { label: '3m', seconds: 180 },
+  { label: '5m', seconds: 300 },
+  { label: '10m', seconds: 600 },
+  { label: '15m', seconds: 900 },
+  { label: '30m', seconds: 1800 },
+  { label: '45m', seconds: 2700 },
+  { label: '1h', seconds: 3600 },
+  { label: '1.5h', seconds: 5400 },
+  { label: '2h', seconds: 7200 },
+]
 
 const modes = [
   { value: 'review' as SessionMode, label: 'Review' },
