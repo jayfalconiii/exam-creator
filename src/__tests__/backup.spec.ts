@@ -20,4 +20,10 @@ describe('detectBackupFormat', () => {
     expect(detectBackupFormat({ version: 1 })).toBe('unknown')
     expect(detectBackupFormat({ questions: [], topics: [] })).toBe('unknown')
   })
+
+  it("returns 'unknown' for backup-shaped object with unrecognised version", () => {
+    expect(detectBackupFormat({ version: 2, questions: [], topics: [] })).toBe('unknown')
+    expect(detectBackupFormat({ version: 99, questions: [], topics: [] })).toBe('unknown')
+    expect(detectBackupFormat({ version: 0, questions: [], topics: [] })).toBe('unknown')
+  })
 })
