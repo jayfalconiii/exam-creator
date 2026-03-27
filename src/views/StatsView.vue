@@ -203,6 +203,7 @@ function handleDelete(session: Session) {
 <style scoped lang="scss">
 .stats-view {
   padding: var(--space-4);
+  padding-bottom: 5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
