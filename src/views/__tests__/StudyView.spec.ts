@@ -170,6 +170,26 @@ describe('StudyView', () => {
     expect(presetBtns).toHaveLength(12)
   })
 
+  it('clicking a preset button updates the timer display', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    await wrapper.find('[data-testid="timer-preset-300"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('5m')
+  })
+
   it('config saves to db and persists question count', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
