@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { buildBackup } from '@/utils/backup'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
@@ -27,6 +28,10 @@ const mockStoreState = {
 
 vi.mock('@/stores/settings', () => ({
   useSettingsStore: vi.fn(() => mockStoreState),
+}))
+
+vi.mock('@/utils/backup', () => ({
+  buildBackup: vi.fn().mockResolvedValue({ version: 1, questions: [], topics: [] }),
 }))
 
 function makeRouter() {
@@ -154,6 +159,16 @@ describe('SettingsView', () => {
     const darkBtn = buttons.find(b => b.text() === 'Dark')
     await darkBtn!.trigger('click')
     expect(mockSaveTheme).toHaveBeenCalledWith('dark')
+  })
+})
+
+describe('Export Backup', () => {
+  it('Export Backup button is visible', () => {
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    const btn = wrapper.find('button[data-testid="export-backup-btn"]')
+    expect(btn.exists()).toBe(true)
+    expect(btn.text()).toContain('Export Backup')
   })
 })
 

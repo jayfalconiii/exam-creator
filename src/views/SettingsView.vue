@@ -42,6 +42,18 @@
     </section>
 
     <section class="settings-view__section">
+      <h2 class="settings-view__section-title">Backup</h2>
+      <Button
+        data-testid="export-backup-btn"
+        label="Export Backup"
+        class="settings-view__btn settings-view__export-btn"
+        :loading="isExporting"
+        :disabled="isExporting"
+        @click="handleExportBackup"
+      />
+    </section>
+
+    <section class="settings-view__section">
       <h2 class="settings-view__section-title">Session Defaults</h2>
       <div class="settings-view__field">
         <label for="question-count-input">Default Question Count</label>
@@ -86,6 +98,7 @@ import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import InputText from 'primevue/inputtext'
 import { useSettingsStore } from '@/stores/settings'
+import { buildBackup } from '@/utils/backup'
 import type { SessionMode, ThemePreference } from '@/types'
 
 const settingsStore = useSettingsStore()
@@ -105,6 +118,7 @@ const questionCountInputStr = computed({
 })
 const modeInput = ref<SessionMode>(settingsStore.defaultMode)
 const defaultsSaved = ref(false)
+const isExporting = ref(false)
 
 onMounted(async () => {
   await settingsStore.loadFromDB()
@@ -121,6 +135,19 @@ async function handleSaveApiKey() {
 async function handleSaveDefaults() {
   await settingsStore.saveDefaults(questionCountInput.value, modeInput.value)
   defaultsSaved.value = true
+}
+
+async function handleExportBackup() {
+  isExporting.value = true
+  const backup = await buildBackup()
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `exam-backup-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+  isExporting.value = false
 }
 </script>
 
