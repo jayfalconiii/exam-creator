@@ -345,6 +345,27 @@ async function startSession() {
   }
 }
 
+.timer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.25rem;
+
+  &__btn {
+    min-height: 36px;
+    padding: 0 0.75rem;
+    border: 1.5px solid var(--color-primary) !important;
+    background: transparent !important;
+    color: var(--color-primary) !important;
+    font-size: 0.8125rem;
+    font-weight: 500;
+
+    &--active {
+      background: var(--color-primary) !important;
+      color: var(--color-text-on-primary) !important;
+    }
+  }
+}
+
 .question-skeleton {
   display: flex;
   flex-direction: column;
