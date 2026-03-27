@@ -198,6 +198,33 @@ describe('Export Backup', () => {
 
     createElementSpy.mockRestore()
   })
+
+  it('downloaded filename matches exam-backup-YYYY-MM-DD.json', async () => {
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
+    URL.revokeObjectURL = vi.fn()
+
+    const mockAnchor = { href: '', download: '', click: vi.fn() } as unknown as HTMLAnchorElement
+    const originalCreate = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(
+      (tag: string, ...args: unknown[]) => {
+        if (tag === 'a') {
+          createElementSpy.mockImplementation((t: string, ...a: unknown[]) => originalCreate(t, ...(a as [])))
+          return mockAnchor
+        }
+        return originalCreate(tag, ...(args as []))
+      },
+    )
+
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    await wrapper.find('button[data-testid="export-backup-btn"]').trigger('click')
+    await flushPromises()
+
+    const today = new Date().toISOString().slice(0, 10)
+    expect(mockAnchor.download).toBe(`exam-backup-${today}.json`)
+
+    createElementSpy.mockRestore()
+  })
 })
 
 describe('HomeView gear icon', () => {
