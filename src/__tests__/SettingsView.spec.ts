@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { buildBackup } from '@/utils/backup'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
@@ -27,6 +28,10 @@ const mockStoreState = {
 
 vi.mock('@/stores/settings', () => ({
   useSettingsStore: vi.fn(() => mockStoreState),
+}))
+
+vi.mock('@/utils/backup', () => ({
+  buildBackup: vi.fn().mockResolvedValue({ version: 1, questions: [], topics: [] }),
 }))
 
 function makeRouter() {
@@ -154,6 +159,110 @@ describe('SettingsView', () => {
     const darkBtn = buttons.find(b => b.text() === 'Dark')
     await darkBtn!.trigger('click')
     expect(mockSaveTheme).toHaveBeenCalledWith('dark')
+  })
+})
+
+describe('Export Backup', () => {
+  it('Export Backup button is visible', () => {
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    const btn = wrapper.find('button[data-testid="export-backup-btn"]')
+    expect(btn.exists()).toBe(true)
+    expect(btn.text()).toContain('Export Backup')
+  })
+
+  it('clicking Export Backup calls buildBackup and triggers a download', async () => {
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
+    URL.revokeObjectURL = vi.fn()
+
+    const mockClick = vi.fn()
+    const mockAnchor = { href: '', download: '', click: mockClick } as unknown as HTMLAnchorElement
+    const originalCreate = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(
+      (tag: string, ...args: unknown[]) => {
+        if (tag === 'a') {
+          createElementSpy.mockImplementation((t: string, ...a: unknown[]) => originalCreate(t, ...(a as [])))
+          return mockAnchor
+        }
+        return originalCreate(tag, ...(args as []))
+      },
+    )
+
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    await wrapper.find('button[data-testid="export-backup-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(buildBackup).toHaveBeenCalled()
+    expect(mockClick).toHaveBeenCalled()
+
+    createElementSpy.mockRestore()
+  })
+
+  it('button is disabled while export is in progress', async () => {
+    let resolveBackup!: () => void
+    const pendingBackup = new Promise<{ version: number; questions: never[]; topics: never[] }>(resolve => {
+      resolveBackup = () => resolve({ version: 1, questions: [], topics: [] })
+    })
+    vi.mocked(buildBackup).mockReturnValueOnce(pendingBackup)
+
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
+    URL.revokeObjectURL = vi.fn()
+
+    const mockAnchor = { href: '', download: '', click: vi.fn() } as unknown as HTMLAnchorElement
+    const originalCreate = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(
+      (tag: string, ...args: unknown[]) => {
+        if (tag === 'a') {
+          createElementSpy.mockImplementation((t: string, ...a: unknown[]) => originalCreate(t, ...(a as [])))
+          return mockAnchor
+        }
+        return originalCreate(tag, ...(args as []))
+      },
+    )
+
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    const btn = wrapper.find('button[data-testid="export-backup-btn"]')
+
+    btn.trigger('click')
+    await flushPromises()
+
+    expect(btn.attributes('disabled')).toBeDefined()
+
+    resolveBackup()
+    await flushPromises()
+
+    expect(btn.attributes('disabled')).toBeUndefined()
+
+    createElementSpy.mockRestore()
+  })
+
+  it('downloaded filename matches exam-backup-YYYY-MM-DD.json', async () => {
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
+    URL.revokeObjectURL = vi.fn()
+
+    const mockAnchor = { href: '', download: '', click: vi.fn() } as unknown as HTMLAnchorElement
+    const originalCreate = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(
+      (tag: string, ...args: unknown[]) => {
+        if (tag === 'a') {
+          createElementSpy.mockImplementation((t: string, ...a: unknown[]) => originalCreate(t, ...(a as [])))
+          return mockAnchor
+        }
+        return originalCreate(tag, ...(args as []))
+      },
+    )
+
+    const router = makeRouter()
+    const wrapper = mount(SettingsView, { global: { plugins: [router, createPinia(), PrimeVue] } })
+    await wrapper.find('button[data-testid="export-backup-btn"]').trigger('click')
+    await flushPromises()
+
+    const today = new Date().toISOString().slice(0, 10)
+    expect(mockAnchor.download).toBe(`exam-backup-${today}.json`)
+
+    createElementSpy.mockRestore()
   })
 })
 
