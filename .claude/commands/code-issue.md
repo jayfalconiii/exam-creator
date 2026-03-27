@@ -92,6 +92,10 @@ If the user says no, stop.
 
 **Send a single message** containing one Agent tool call per issue, all with `isolation: "worktree"`. Do NOT send separate messages — all calls must be in the same message so they run simultaneously.
 
+Each sub-agent will implement, push its branch, clean up its worktree, and return a structured summary with `BRANCH`, `PR_TITLE`, and `PR_BODY_START...PR_BODY_END`.
+
+Once **all** sub-agents have completed, proceed to Step 6.
+
 For each issue, use the sub-agent prompt template below with all `<PLACEHOLDERS>` substituted.
 
 ---
@@ -188,16 +192,21 @@ After all behaviors are implemented and all tests pass:
    npx vue-tsc --noEmit
    Fix ALL TypeScript errors before creating the PR
 
-## Step 6 — Create the PR
+## Step 6 — Push and report
 
 Push the branch:
+```bash
 git push -u origin <BRANCH_NAME>
+```
 
-Then create the PR (fill in all sections from your actual implementation):
+Then output a structured summary that the calling context will use to create the PR. Include:
 
-gh pr create \
-  --title "<TYPE>(<scope>): <concise description matching issue intent>" \
-  --body "$(cat <<'EOF'
+```
+BRANCH: <BRANCH_NAME>
+PR_TITLE: <TYPE>(<scope>): <concise description matching issue intent>
+CLOSES: #<NUMBER>
+
+PR_BODY_START
 ## 🚀 Feature
 - <one-line summary of what this implements>
 
@@ -221,32 +230,21 @@ Closes #<NUMBER>
 - [x] Unit/integration tests added (if applicable)
 - [ ] Updated relevant documentation
 - [ ] Verified in staging (if applicable)
-EOF
-)" \
-  --head <BRANCH_NAME> \
-  --base main
-
-After the PR is created, output the PR URL.
+PR_BODY_END
+```
 
 ## Step 7 — Clean up the worktree
 
-Once the PR URL is confirmed, clean up the worktree so it doesn't linger in VS Code's source control views.
+Clean up the worktree so it doesn't linger in VS Code's source control views.
 
 ```bash
-# Capture this worktree's path before leaving it
 WORKTREE_PATH=$(pwd)
-
-# Move to the main repo
 cd /Users/jayfalcon-arcanys/Developer/side-projects/exam-creator
-
-# Remove the worktree (--force handles any lingering lock files)
 git worktree remove "$WORKTREE_PATH" --force
-
-# Prune stale worktree references
 git worktree prune
 ```
 
-Confirm the worktree was removed by running `git worktree list` and verifying the path is gone. Report the result to the user.
+Confirm removal by running `git worktree list` and report the result.
 
 ## Hard constraints
 - Never commit directly to main
@@ -254,5 +252,24 @@ Confirm the worktree was removed by running `git worktree list` and verifying th
 - Never use watch or watchEffect in Vue components
 - Never use relative ../../ imports — always use @/
 - Never add features not described in the issue
+- Do NOT create the PR — push the branch, output the summary, clean up the worktree, and stop
 - If blocked or uncertain, describe the blocker clearly and stop — do not guess or workaround silently
 ```
+
+---
+
+## Step 6 (main context) — Create PRs after all sub-agents complete
+
+Once all sub-agents have finished and returned their summaries, create one PR per issue using `gh pr create`. Use the `BRANCH`, `PR_TITLE`, and `PR_BODY_START...PR_BODY_END` from each sub-agent's output.
+
+For each issue, write the PR body to a temp file using the Write tool, then run:
+
+```bash
+gh pr create \
+  --title "<PR_TITLE from sub-agent>" \
+  --body-file /tmp/pr-body-<NUMBER>.md \
+  --head <BRANCH from sub-agent> \
+  --base main
+```
+
+Delete the temp file after each PR is created. Output all PR URLs to the user.
