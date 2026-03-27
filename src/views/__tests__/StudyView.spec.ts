@@ -228,6 +228,28 @@ describe('StudyView', () => {
     expect(wrapper.find('[data-testid="timer-seconds"]').text()).toBe('1m 30s')
   })
 
+  it('does not render a slider in the timer section', async () => {
+    const wrapper = mountStudyView()
+    await flushPromises()
+
+    const timerToggle = wrapper.find('[data-testid="timer-toggle"]')
+    const input = timerToggle.find('input')
+    if (input.exists()) {
+      ;(input.element as HTMLInputElement).checked = true
+      await input.trigger('change')
+    } else {
+      await timerToggle.trigger('click')
+    }
+    await flushPromises()
+
+    // Only the question-count-slider should exist; no slider in timer section
+    const allSliders = wrapper.findAll('.p-slider')
+    const questionCountSlider = wrapper.find('[data-testid="question-count-slider"]')
+    expect(questionCountSlider.exists()).toBe(true)
+    // All sliders present should only be the question count slider
+    expect(allSliders.length).toBeLessThanOrEqual(1)
+  })
+
   it('config saves to db and persists question count', async () => {
     const wrapper = mountStudyView()
     await flushPromises()
