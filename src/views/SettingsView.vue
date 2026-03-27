@@ -46,7 +46,7 @@
       <Button
         data-testid="export-backup-btn"
         label="Export Backup"
-        class="settings-view__btn settings-view__export-btn"
+        class="settings-view__export-btn"
         :loading="isExporting"
         :disabled="isExporting"
         @click="handleExportBackup"
@@ -211,6 +211,10 @@ async function handleExportBackup() {
   }
 
   &__btn {
+    min-height: 44px;
+  }
+
+  &__export-btn {
     min-height: 44px;
   }
 
