@@ -171,6 +171,45 @@ describe('LibraryView — JSON file upload zone', () => {
     expect(errorEl).not.toBeNull()
     expect(errorEl!.textContent).toContain('.json')
   })
+
+  it('uploading a second file resets prior preview and error state', async () => {
+    // Load a valid first file to populate preview
+    const content1 = JSON.stringify([validQuestion])
+    mockFileReader(content1)
+
+    mountLibraryView()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Import',
+    )
+    importBtn!.click()
+    await flushPromises()
+
+    const fileInput = document.querySelector('input[type="file"][accept=".json"]') as HTMLInputElement
+    const file1 = new File([content1], 'first.json', { type: 'application/json' })
+    Object.defineProperty(fileInput, 'files', { value: [file1], configurable: true })
+    fileInput.dispatchEvent(new Event('change'))
+    await flushPromises()
+    await flushPromises()
+
+    // Confirm preview shown
+    expect(document.querySelector('.import-dialog__preview')).not.toBeNull()
+
+    // Now load a second (invalid) file — should reset preview before erroring
+    const content2 = 'not valid json at all'
+    mockFileReader(content2)
+
+    const file2 = new File([content2], 'second.json', { type: 'application/json' })
+    Object.defineProperty(fileInput, 'files', { value: [file2], configurable: true })
+    fileInput.dispatchEvent(new Event('change'))
+    await flushPromises()
+    await flushPromises()
+
+    // Old preview should be gone, parse error should show
+    expect(document.querySelector('.import-dialog__preview')).toBeNull()
+    expect(document.querySelector('.import-dialog__parse-error')).not.toBeNull()
+  })
 })
 
 describe('LibraryView import dialog', () => {

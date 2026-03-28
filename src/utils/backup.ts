@@ -67,8 +67,7 @@ export async function mergeBackup(backup: BackupFile, scope: BackupScope): Promi
       }
     } else {
       // No local match — insert as new
-      const { id: _id, ...rest } = backupQ as Question
-      await db.questions.add(rest as Question)
+      await db.questions.add(backupQ as Question)
     }
   }
 
@@ -95,8 +94,7 @@ export async function mergeBackup(backup: BackupFile, scope: BackupScope): Promi
 
     for (const backupTopic of backup.topics) {
       if (!localTopicIds.has(backupTopic.topicId)) {
-        const { id: _id, ...rest } = backupTopic as Topic
-        await db.topics.add(rest as Topic)
+        await db.topics.add(backupTopic as Topic)
       }
     }
   }
