@@ -9,6 +9,22 @@ import ToastService from 'primevue/toastservice'
 import { db } from '@/db/db'
 import LibraryView from '@/views/LibraryView.vue'
 
+function mockFileReader(content: string) {
+  const mockReader: Partial<FileReader> & { readAsText: () => void } = {
+    onload: null,
+    onerror: null,
+    result: content,
+    readAsText() {
+      const handler = (this as unknown as FileReader).onload
+      if (handler) {
+        handler.call(this, { target: { result: content } } as unknown as ProgressEvent<FileReader>)
+      }
+    },
+  }
+  vi.spyOn(window, 'FileReader').mockImplementation(() => mockReader as unknown as FileReader)
+  return mockReader
+}
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
@@ -74,6 +90,65 @@ const validQuestion = {
   correctIndex: 0,
   explanation: 'EC2 is compute.',
 }
+
+describe('LibraryView — JSON file upload zone', () => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await db.questions.clear()
+    await db.topics.clear()
+    document.body.replaceChildren()
+  })
+
+  it('upload zone renders above the textarea in the JSON tab', async () => {
+    const wrapper = mountLibraryView()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Import',
+    )
+    importBtn!.click()
+    await flushPromises()
+
+    const uploadZone = document.querySelector('[data-testid="json-upload-zone"]')
+    const textarea = document.querySelector('textarea')
+    expect(uploadZone).not.toBeNull()
+    expect(textarea).not.toBeNull()
+
+    // upload zone must come before the textarea in the DOM
+    const position = uploadZone!.compareDocumentPosition(textarea!)
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('loading a valid JSON file populates the textarea and auto-runs preview', async () => {
+    const content = JSON.stringify([validQuestion])
+    mockFileReader(content)
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Import',
+    )
+    importBtn!.click()
+    await flushPromises()
+
+    const fileInput = document.querySelector('input[type="file"][accept=".json"]') as HTMLInputElement
+    expect(fileInput).not.toBeNull()
+
+    const file = new File([content], 'questions.json', { type: 'application/json' })
+    Object.defineProperty(fileInput, 'files', { value: [file] })
+    fileInput.dispatchEvent(new Event('change'))
+    await flushPromises()
+    await flushPromises()
+
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement
+    expect(textarea.value).toBe(content)
+
+    // preview result should be shown automatically
+    const previewEl = document.querySelector('.import-dialog__preview')
+    expect(previewEl).not.toBeNull()
+  })
+})
 
 describe('LibraryView import dialog', () => {
   beforeEach(async () => {
@@ -277,5 +352,106 @@ describe('LibraryView — backup import', () => {
     expect(dbTopics.some((t) => t.topicId === 'old')).toBe(false)
     expect(dbTopics.some((t) => t.topicId === 'ec2')).toBe(true)
     expect(dbTopics.some((t) => t.topicId === 's3')).toBe(true)
+  })
+
+  it('Merge button is enabled (not disabled)', async () => {
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    const mergeBtn = document.querySelector('[data-testid="strategy-merge"]') as HTMLButtonElement
+    expect(mergeBtn).not.toBeNull()
+    expect(mergeBtn.disabled).toBe(false)
+  })
+
+  it('Merge + questions only: duplicate resolved by higher errorCount, new question inserted, topics unchanged', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, topicId: 'ec2', text: 'What is EC2?', options: ['A','B','C','D'], correctIndex: 0, explanation: 'x', source: 'generated', errorCount: 1, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'old', name: 'Old', color: '#000', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+    ])
+
+    const backupWithHigherError = {
+      version: 1,
+      questions: [
+        { ...validQuestion, topicId: 'ec2', text: 'What is EC2?', errorCount: 7 },
+        { ...validQuestion, topicId: 's3', text: 'What is S3?', errorCount: 0 },
+      ],
+      topics: [
+        { topicId: 's3', name: 'S3', color: '#00695c', rawScore: 5, lastReviewedAt: null, totalSessions: 2 },
+      ],
+    }
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, backupWithHigherError)
+
+    ;(document.querySelector('[data-testid="strategy-merge"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Merge & import',
+    )
+    importBtn!.click()
+    for (let i = 0; i < 20; i++) await flushPromises()
+
+    const dbQuestions = await db.questions.toArray()
+    expect(dbQuestions).toHaveLength(2)
+    const ec2Q = dbQuestions.find((q) => q.topicId === 'ec2' && q.text === 'What is EC2?')
+    expect(ec2Q?.errorCount).toBe(7)
+
+    // topics unchanged (questions only scope)
+    const dbTopics = await db.topics.toArray()
+    expect(dbTopics).toHaveLength(1)
+    expect(dbTopics[0].topicId).toBe('old')
+  })
+
+  it('Merge + questions + scores: existing topics kept; new topics inserted', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, topicId: 'ec2', text: 'What is EC2?', options: ['A','B','C','D'], correctIndex: 0, explanation: 'x', source: 'generated', errorCount: 3, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'ec2', name: 'EC2', color: '#aaa', rawScore: 99, lastReviewedAt: null, totalSessions: 5 },
+    ])
+
+    const backupMergeData = {
+      version: 1,
+      questions: [
+        { ...validQuestion, topicId: 'ec2', text: 'What is EC2?', errorCount: 1 },
+        { ...validQuestion, topicId: 's3', text: 'What is S3?', errorCount: 0 },
+      ],
+      topics: [
+        { topicId: 'ec2', name: 'EC2 backup', color: '#000', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+        { topicId: 's3', name: 'S3', color: '#111', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+      ],
+    }
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, backupMergeData)
+
+    ;(document.querySelector('[data-testid="scope-questions-and-scores"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+    ;(document.querySelector('[data-testid="strategy-merge"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Merge & import',
+    )
+    importBtn!.click()
+    for (let i = 0; i < 20; i++) await flushPromises()
+
+    const dbTopics = await db.topics.toArray()
+    expect(dbTopics).toHaveLength(2)
+    const ec2T = dbTopics.find((t) => t.topicId === 'ec2')!
+    expect(ec2T.rawScore).toBe(99)   // local kept
+    expect(ec2T.name).toBe('EC2')    // local kept
+    expect(dbTopics.some((t) => t.topicId === 's3')).toBe(true)
+
+    const dbQuestions = await db.questions.toArray()
+    expect(dbQuestions).toHaveLength(2)
+    const ec2Q = dbQuestions.find((q) => q.topicId === 'ec2')!
+    expect(ec2Q.errorCount).toBe(3)  // local higher errorCount kept
   })
 })

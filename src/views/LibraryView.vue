@@ -133,6 +133,33 @@
         </p>
         <pre class="import-dialog__example">{{ exampleShape }}</pre>
 
+        <div
+          class="import-dialog__upload-zone"
+          :class="{ 'import-dialog__upload-zone--dragover': isDragOver }"
+          data-testid="json-upload-zone"
+          role="button"
+          tabindex="0"
+          @click="jsonFileInput?.click()"
+          @keydown.enter.prevent="jsonFileInput?.click()"
+          @keydown.space.prevent="jsonFileInput?.click()"
+          @dragover.prevent="isDragOver = true"
+          @dragleave.prevent="isDragOver = false"
+          @drop.prevent="handleJsonFileDrop"
+        >
+          <input
+            ref="jsonFileInput"
+            type="file"
+            accept=".json"
+            class="import-dialog__file-input--hidden"
+            @change="handleJsonFileChange"
+          />
+          <span class="import-dialog__upload-zone-label">Upload .json file</span>
+          <span class="import-dialog__upload-zone-sub"> or drag and drop here</span>
+          <p v-if="jsonFileError" class="import-dialog__upload-zone-error" data-testid="json-file-error">
+            {{ jsonFileError }}
+          </p>
+        </div>
+
         <Textarea
           v-model="jsonInput"
           class="import-dialog__textarea"
@@ -206,11 +233,12 @@
             <p class="import-dialog__selector-label">Strategy</p>
             <div class="import-dialog__selector-options">
               <button
-                class="import-dialog__selector-btn import-dialog__selector-btn--disabled"
+                class="import-dialog__selector-btn"
+                :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'merge' }"
                 type="button"
                 data-testid="strategy-merge"
-                disabled
-              >Merge <span class="import-dialog__coming-soon">(coming soon)</span></button>
+                @click="backupStrategy = 'merge'"
+              >Merge</button>
               <button
                 class="import-dialog__selector-btn"
                 :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'replace' }"
@@ -282,8 +310,7 @@
         />
         <Button
           v-if="activeImportTab === 'json' && backupPreviewResult"
-          :label="backupStrategy === 'replace' ? 'Replace & import' : 'Merge & import (coming soon)'"
-          :disabled="backupStrategy === 'merge'"
+          :label="backupStrategy === 'replace' ? 'Replace & import' : 'Merge & import'"
           @click="handleBackupImport"
         />
         <Button
@@ -308,7 +335,7 @@ import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
 import { pickTopicColor } from '@/utils/topicColors'
-import { detectBackupFormat } from '@/utils/backup'
+import { detectBackupFormat, mergeBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
 
 const DUPLICATES_SENTINEL = '__duplicates__'
@@ -479,6 +506,9 @@ const activeImportTab = ref<'json' | 'csv'>('json')
 // JSON tab state
 const jsonInput = ref('')
 const parseError = ref<string | null>(null)
+const jsonFileInput = ref<HTMLInputElement | null>(null)
+const jsonFileError = ref<string | null>(null)
+const isDragOver = ref(false)
 
 // CSV tab state
 const csvFileInput = ref<HTMLInputElement | null>(null)
@@ -654,6 +684,8 @@ function resetImportState() {
   activeImportTab.value = 'json'
   jsonInput.value = ''
   parseError.value = null
+  jsonFileError.value = null
+  isDragOver.value = false
   previewResult.value = null
   backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
@@ -663,6 +695,44 @@ function resetImportState() {
   csvPreviewResult.value = null
   newTopicIdsFromCsv.value = []
   if (csvFileInput.value) csvFileInput.value.value = ''
+}
+
+function loadJsonFile(file: File) {
+  jsonInput.value = ''
+  jsonFileError.value = null
+  resetPreview()
+
+  if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+    jsonFileError.value = 'Only .json files are supported.'
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = async (event) => {
+    const text = (event.target?.result as string) ?? ''
+    jsonInput.value = text
+    await handlePreview()
+  }
+  reader.onerror = () => {
+    jsonFileError.value = 'Failed to read the file. Please try again.'
+  }
+  reader.readAsText(file)
+}
+
+function handleJsonFileChange(e: Event) {
+  isDragOver.value = false
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  loadJsonFile(file)
+  // reset input so re-uploading the same file triggers change
+  if (jsonFileInput.value) jsonFileInput.value.value = ''
+}
+
+function handleJsonFileDrop(e: DragEvent) {
+  isDragOver.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (!file) return
+  loadJsonFile(file)
 }
 
 function handleCsvFileChange(e: Event) {
@@ -787,6 +857,16 @@ async function handleBackupImport() {
     ])
 
     toast.add({ severity: 'success', summary: 'Backup Restored', detail: 'Data replaced successfully.', life: 3000 })
+    closeDialog()
+  } else if (backupStrategy.value === 'merge') {
+    await mergeBackup(backup, backupScope.value)
+
+    ;[questions.value, topics.value] = await Promise.all([
+      db.questions.toArray(),
+      db.topics.toArray(),
+    ])
+
+    toast.add({ severity: 'success', summary: 'Backup Merged', detail: 'Data merged successfully.', life: 3000 })
     closeDialog()
   }
 }
@@ -1058,6 +1138,48 @@ async function handleImport() {
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
+  }
+
+  &__upload-zone {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-3);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--color-surface);
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--color-primary);
+      outline: none;
+    }
+
+    &--dragover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-100, #e8f0fe);
+    }
+  }
+
+  &__upload-zone-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-primary);
+  }
+
+  &__upload-zone-sub {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  &__upload-zone-error {
+    margin: var(--space-2) 0 0;
+    font-size: 0.8125rem;
+    color: var(--color-danger, #dc2626);
+  }
+
+  &__file-input--hidden {
+    display: none;
   }
 
   &__textarea {
