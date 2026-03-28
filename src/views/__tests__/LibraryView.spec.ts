@@ -160,3 +160,122 @@ describe('LibraryView import dialog', () => {
     expect(parseError).not.toBeNull()
   })
 })
+
+const validTopic = {
+  topicId: 'ec2',
+  name: 'EC2',
+  color: '#1565c0',
+  rawScore: 0,
+  lastReviewedAt: null,
+  totalSessions: 0,
+}
+
+const validBackup = {
+  version: 1,
+  questions: [validQuestion, { ...validQuestion, topicId: 's3', text: 'What is S3?' }],
+  topics: [
+    validTopic,
+    { topicId: 's3', name: 'S3', color: '#00695c', rawScore: 5, lastReviewedAt: null, totalSessions: 2 },
+  ],
+}
+
+describe('LibraryView — backup import', () => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await db.questions.clear()
+    await db.topics.clear()
+    document.body.replaceChildren()
+  })
+
+  it('scope selector visible after backup preview', async () => {
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    expect(document.querySelector('[data-testid="scope-questions"]')).not.toBeNull()
+    expect(document.querySelector('[data-testid="scope-questions-and-scores"]')).not.toBeNull()
+  })
+
+  it('strategy selector visible after backup preview', async () => {
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    expect(document.querySelector('[data-testid="strategy-replace"]')).not.toBeNull()
+    expect(document.querySelector('[data-testid="strategy-merge"]')).not.toBeNull()
+  })
+
+  it('replace warning shown by default (strategy = replace)', async () => {
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    expect(document.querySelector('[data-testid="replace-warning"]')).not.toBeNull()
+  })
+
+  it('Replace + questions only: clears questions, topics unchanged', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, topicId: 'old', text: 'Old question', options: ['A','B','C','D'], correctIndex: 0, explanation: 'x', source: 'generated', errorCount: 0, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'old', name: 'Old', color: '#000', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+    ])
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Replace & import',
+    )
+    importBtn!.click()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const dbQuestions = await db.questions.toArray()
+    expect(dbQuestions).toHaveLength(2)
+    expect(dbQuestions.every((q) => q.id !== undefined)).toBe(true)
+    expect(dbQuestions.map((q) => q.text)).toContain('What is EC2?')
+    expect(dbQuestions.map((q) => q.text)).toContain('What is S3?')
+
+    // topics should still have old topic (questions-only scope)
+    const dbTopics = await db.topics.toArray()
+    expect(dbTopics.some((t) => t.topicId === 'old')).toBe(true)
+  })
+
+  it('Replace + questions + scores: clears both tables and inserts backup data', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, topicId: 'old', text: 'Old question', options: ['A','B','C','D'], correctIndex: 0, explanation: 'x', source: 'generated', errorCount: 0, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'old', name: 'Old', color: '#000', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+    ])
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    ;(document.querySelector('[data-testid="scope-questions-and-scores"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Replace & import',
+    )
+    importBtn!.click()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const dbQuestions = await db.questions.toArray()
+    expect(dbQuestions).toHaveLength(2)
+    expect(dbQuestions.every((q) => !('id' in q) || typeof q.id === 'number')).toBe(true)
+
+    const dbTopics = await db.topics.toArray()
+    expect(dbTopics).toHaveLength(2)
+    expect(dbTopics.some((t) => t.topicId === 'old')).toBe(false)
+    expect(dbTopics.some((t) => t.topicId === 'ec2')).toBe(true)
+    expect(dbTopics.some((t) => t.topicId === 's3')).toBe(true)
+  })
+})

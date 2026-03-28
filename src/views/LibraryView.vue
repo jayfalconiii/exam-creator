@@ -181,6 +181,53 @@
           <p v-if="backupPreviewResult.invalidCount > 0" class="import-dialog__new-topics-notice">
             <strong data-testid="backup-invalid-count">{{ backupPreviewResult.invalidCount }}</strong> invalid question(s) will be skipped.
           </p>
+
+          <div class="import-dialog__selector-group">
+            <p class="import-dialog__selector-label">Scope</p>
+            <div class="import-dialog__selector-options">
+              <button
+                class="import-dialog__selector-btn"
+                :class="{ 'import-dialog__selector-btn--active': backupScope === 'questions' }"
+                type="button"
+                data-testid="scope-questions"
+                @click="backupScope = 'questions'"
+              >Questions only</button>
+              <button
+                class="import-dialog__selector-btn"
+                :class="{ 'import-dialog__selector-btn--active': backupScope === 'questions-and-scores' }"
+                type="button"
+                data-testid="scope-questions-and-scores"
+                @click="backupScope = 'questions-and-scores'"
+              >Questions + scores</button>
+            </div>
+          </div>
+
+          <div class="import-dialog__selector-group">
+            <p class="import-dialog__selector-label">Strategy</p>
+            <div class="import-dialog__selector-options">
+              <button
+                class="import-dialog__selector-btn import-dialog__selector-btn--disabled"
+                type="button"
+                data-testid="strategy-merge"
+                disabled
+              >Merge <span class="import-dialog__coming-soon">(coming soon)</span></button>
+              <button
+                class="import-dialog__selector-btn"
+                :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'replace' }"
+                type="button"
+                data-testid="strategy-replace"
+                @click="backupStrategy = 'replace'"
+              >Replace</button>
+            </div>
+          </div>
+
+          <p
+            v-if="backupStrategy === 'replace'"
+            class="import-dialog__replace-warning"
+            data-testid="replace-warning"
+          >
+            This will permanently delete all existing questions{{ backupScope === 'questions-and-scores' ? ' and topics' : '' }} ({{ backupScope === 'questions-and-scores' ? 'Questions + scores selected' : 'questions only' }}). This action cannot be undone.
+          </p>
         </div>
       </div>
 
@@ -235,8 +282,9 @@
         />
         <Button
           v-if="activeImportTab === 'json' && backupPreviewResult"
-          label="Import backup"
-          :disabled="true"
+          :label="backupStrategy === 'replace' ? 'Replace & import' : 'Merge & import (coming soon)'"
+          :disabled="backupStrategy === 'merge'"
+          @click="handleBackupImport"
         />
         <Button
           v-if="activeImportTab === 'csv'"
@@ -458,6 +506,11 @@ interface BackupPreviewResult {
 }
 const backupPreviewResult = ref<BackupPreviewResult | null>(null)
 
+type BackupScope = 'questions' | 'questions-and-scores'
+type BackupStrategy = 'replace' | 'merge'
+const backupScope = ref<BackupScope>('questions')
+const backupStrategy = ref<BackupStrategy>('replace')
+
 const exampleShape = `[{ "topicId": "ec2", "text": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }]`
 
 function validateItem(item: unknown, index: number): { valid: Omit<Question, 'id'> | null; error: InvalidItem | null } {
@@ -589,6 +642,8 @@ function resetPreview() {
   previewResult.value = null
   backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
+  backupScope.value = 'questions'
+  backupStrategy.value = 'replace'
 }
 
 function switchTab(tab: 'json' | 'csv') {
@@ -602,6 +657,8 @@ function resetImportState() {
   previewResult.value = null
   backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
+  backupScope.value = 'questions'
+  backupStrategy.value = 'replace'
   csvParseError.value = null
   csvPreviewResult.value = null
   newTopicIdsFromCsv.value = []
@@ -706,6 +763,32 @@ async function handleCsvImport() {
   })
 
   closeDialog()
+}
+
+async function handleBackupImport() {
+  if (!backupPreviewResult.value) return
+  const backup = JSON.parse(jsonInput.value) as BackupFile
+
+  if (backupStrategy.value === 'replace') {
+    await db.questions.clear()
+    if (backupScope.value === 'questions-and-scores') {
+      await db.topics.clear()
+    }
+
+    await db.questions.bulkAdd(backup.questions as Question[])
+
+    if (backupScope.value === 'questions-and-scores') {
+      await db.topics.bulkAdd(backup.topics as Topic[])
+    }
+
+    ;[questions.value, topics.value] = await Promise.all([
+      db.questions.toArray(),
+      db.topics.toArray(),
+    ])
+
+    toast.add({ severity: 'success', summary: 'Backup Restored', detail: 'Data replaced successfully.', life: 3000 })
+    closeDialog()
+  }
 }
 
 function closeDialog() {
@@ -1040,6 +1123,59 @@ async function handleImport() {
     border-radius: var(--radius-md);
     font-size: 0.8125rem;
     color: var(--color-text);
+  }
+
+  &__selector-group {
+    margin-top: var(--space-3);
+  }
+
+  &__selector-label {
+    margin: 0 0 var(--space-1);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+
+  &__selector-options {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  &__selector-btn {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &--active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__coming-soon {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  &__replace-warning {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-danger-50, #fef2f2);
+    border: 1px solid var(--color-danger-200, #fecaca);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    color: var(--color-danger, #dc2626);
   }
 }
 </style>
