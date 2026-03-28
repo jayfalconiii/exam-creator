@@ -171,6 +171,17 @@
             {{ newTopicIdsFromJson.length }} new topic(s) will be created: {{ newTopicIdsFromJson.join(', ') }}
           </p>
         </div>
+
+        <div v-if="backupPreviewResult" class="import-dialog__preview" data-testid="backup-preview">
+          <p class="import-dialog__preview-summary">
+            Backup file detected —
+            <strong data-testid="backup-valid-count">{{ backupPreviewResult.validCount }}</strong> valid question(s),
+            <strong data-testid="backup-topic-count">{{ backupPreviewResult.topicCount }}</strong> topic(s)
+          </p>
+          <p v-if="backupPreviewResult.invalidCount > 0" class="import-dialog__new-topics-notice">
+            <strong data-testid="backup-invalid-count">{{ backupPreviewResult.invalidCount }}</strong> invalid question(s) will be skipped.
+          </p>
+        </div>
       </div>
 
       <div v-else class="import-dialog__body">
@@ -217,13 +228,18 @@
       <template #footer>
         <Button label="Cancel" outlined @click="closeDialog" />
         <Button
-          v-if="activeImportTab === 'json'"
+          v-if="activeImportTab === 'json' && !backupPreviewResult"
           :label="`Import ${previewResult?.valid.length ?? 0} question${(previewResult?.valid.length ?? 0) !== 1 ? 's' : ''}`"
           :disabled="!previewResult || previewResult.valid.length === 0"
           @click="handleImport"
         />
         <Button
-          v-else
+          v-if="activeImportTab === 'json' && backupPreviewResult"
+          label="Import backup"
+          :disabled="true"
+        />
+        <Button
+          v-if="activeImportTab === 'csv'"
           :label="`Import ${csvPreviewResult?.valid.length ?? 0} question${(csvPreviewResult?.valid.length ?? 0) !== 1 ? 's' : ''}`"
           :disabled="!csvPreviewResult || csvPreviewResult.valid.length === 0"
           @click="handleCsvImport"
@@ -244,6 +260,8 @@ import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
 import { pickTopicColor } from '@/utils/topicColors'
+import { detectBackupFormat } from '@/utils/backup'
+import type { BackupFile } from '@/utils/backup'
 
 const DUPLICATES_SENTINEL = '__duplicates__'
 
@@ -433,6 +451,13 @@ const previewResult = ref<PreviewResult | null>(null)
 const newTopicIdsFromJson = ref<string[]>([])
 const newTopicIdsFromCsv = ref<string[]>([])
 
+interface BackupPreviewResult {
+  validCount: number
+  invalidCount: number
+  topicCount: number
+}
+const backupPreviewResult = ref<BackupPreviewResult | null>(null)
+
 const exampleShape = `[{ "topicId": "ec2", "text": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }]`
 
 function validateItem(item: unknown, index: number): { valid: Omit<Question, 'id'> | null; error: InvalidItem | null } {
@@ -492,6 +517,7 @@ async function detectNewTopicIds(validRows: Omit<Question, 'id'>[]): Promise<str
 async function handlePreview() {
   parseError.value = null
   previewResult.value = null
+  backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
 
   const trimmed = jsonInput.value.trim()
@@ -508,12 +534,36 @@ async function handlePreview() {
     return
   }
 
-  if (!Array.isArray(parsed)) {
-    parseError.value = 'Expected a JSON array at the top level.'
+  const format = detectBackupFormat(parsed)
+
+  if (format === 'backup') {
+    const backup = parsed as BackupFile
+    const valid: Omit<Question, 'id'>[] = []
+    const invalid: InvalidItem[] = []
+
+    backup.questions.forEach((item, index) => {
+      const result = validateItem(item, index)
+      if (result.valid) valid.push(result.valid)
+      else if (result.error) invalid.push(result.error)
+    })
+
+    backupPreviewResult.value = {
+      validCount: valid.length,
+      invalidCount: invalid.length,
+      topicCount: backup.topics.length,
+    }
     return
   }
 
-  if (parsed.length === 0) {
+  if (format === 'unknown') {
+    parseError.value = 'Unrecognised format. Expected a JSON array or a backup file.'
+    return
+  }
+
+  // format === 'questions'
+  const arr = parsed as unknown[]
+
+  if (arr.length === 0) {
     parseError.value = 'Array is empty.'
     return
   }
@@ -521,7 +571,7 @@ async function handlePreview() {
   const valid: Omit<Question, 'id'>[] = []
   const invalid: InvalidItem[] = []
 
-  parsed.forEach((item, index) => {
+  arr.forEach((item, index) => {
     const result = validateItem(item, index)
     if (result.valid) valid.push(result.valid)
     else if (result.error) invalid.push(result.error)
@@ -537,6 +587,7 @@ async function handlePreview() {
 function resetPreview() {
   parseError.value = null
   previewResult.value = null
+  backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
 }
 
@@ -549,6 +600,7 @@ function resetImportState() {
   jsonInput.value = ''
   parseError.value = null
   previewResult.value = null
+  backupPreviewResult.value = null
   newTopicIdsFromJson.value = []
   csvParseError.value = null
   csvPreviewResult.value = null
