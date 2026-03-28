@@ -206,11 +206,12 @@
             <p class="import-dialog__selector-label">Strategy</p>
             <div class="import-dialog__selector-options">
               <button
-                class="import-dialog__selector-btn import-dialog__selector-btn--disabled"
+                class="import-dialog__selector-btn"
+                :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'merge' }"
                 type="button"
                 data-testid="strategy-merge"
-                disabled
-              >Merge <span class="import-dialog__coming-soon">(coming soon)</span></button>
+                @click="backupStrategy = 'merge'"
+              >Merge</button>
               <button
                 class="import-dialog__selector-btn"
                 :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'replace' }"
@@ -282,8 +283,7 @@
         />
         <Button
           v-if="activeImportTab === 'json' && backupPreviewResult"
-          :label="backupStrategy === 'replace' ? 'Replace & import' : 'Merge & import (coming soon)'"
-          :disabled="backupStrategy === 'merge'"
+          :label="backupStrategy === 'replace' ? 'Replace & import' : 'Merge & import'"
           @click="handleBackupImport"
         />
         <Button
@@ -308,7 +308,7 @@ import { useToast } from 'primevue/usetoast'
 import { db } from '@/db/db'
 import type { Question, Topic } from '@/types'
 import { pickTopicColor } from '@/utils/topicColors'
-import { detectBackupFormat } from '@/utils/backup'
+import { detectBackupFormat, mergeBackup } from '@/utils/backup'
 import type { BackupFile } from '@/utils/backup'
 
 const DUPLICATES_SENTINEL = '__duplicates__'
@@ -787,6 +787,19 @@ async function handleBackupImport() {
     ])
 
     toast.add({ severity: 'success', summary: 'Backup Restored', detail: 'Data replaced successfully.', life: 3000 })
+    closeDialog()
+    return
+  }
+
+  if (backupStrategy.value === 'merge') {
+    await mergeBackup(backup, backupScope.value)
+
+    ;[questions.value, topics.value] = await Promise.all([
+      db.questions.toArray(),
+      db.topics.toArray(),
+    ])
+
+    toast.add({ severity: 'success', summary: 'Backup Merged', detail: 'Data merged successfully.', life: 3000 })
     closeDialog()
   }
 }
