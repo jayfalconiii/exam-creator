@@ -278,4 +278,78 @@ describe('LibraryView — backup import', () => {
     expect(dbTopics.some((t) => t.topicId === 'ec2')).toBe(true)
     expect(dbTopics.some((t) => t.topicId === 's3')).toBe(true)
   })
+
+  it('Merge + questions only: new questions inserted, existing topics unchanged', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, errorCount: 2, source: 'generated' as const, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'existing', name: 'Existing', color: '#000', rawScore: 0, lastReviewedAt: null, totalSessions: 0 },
+    ])
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    ;(document.querySelector('[data-testid="strategy-merge"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Merge & import',
+    )
+    importBtn!.click()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const dbQuestions = await db.questions.toArray()
+    expect(dbQuestions.map((q) => q.text)).toContain('What is EC2?')
+    expect(dbQuestions.map((q) => q.text)).toContain('What is S3?')
+
+    // topics untouched (questions-only scope)
+    const dbTopics = await db.topics.toArray()
+    expect(dbTopics.some((t) => t.topicId === 'existing')).toBe(true)
+    expect(dbTopics.some((t) => t.topicId === 'ec2')).toBe(false)
+    expect(dbTopics.some((t) => t.topicId === 's3')).toBe(false)
+  })
+
+  it('Merge + questions + scores: overlapping questions keep higher errorCount; new topics inserted', async () => {
+    await db.questions.bulkAdd([
+      { ...validQuestion, errorCount: 10, source: 'generated' as const, lastSeenAt: null, createdAt: Date.now() },
+    ])
+    await db.topics.bulkAdd([
+      { topicId: 'ec2', name: 'EC2 Local', color: '#000', rawScore: 99, lastReviewedAt: null, totalSessions: 0 },
+    ])
+
+    const wrapper = mountLibraryView()
+    await flushPromises()
+    await openImportAndPreview(wrapper, validBackup)
+
+    ;(document.querySelector('[data-testid="strategy-merge"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+    ;(document.querySelector('[data-testid="scope-questions-and-scores"]') as HTMLButtonElement)?.click()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Merge & import',
+    )
+    importBtn!.click()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const dbQuestions = await db.questions.toArray()
+    const ec2q = dbQuestions.find((q) => q.text === 'What is EC2?')
+    // backup has errorCount: 0 (validQuestion default), local has 10 — keep 10
+    expect(ec2q?.errorCount).toBe(10)
+
+    const dbTopics = await db.topics.toArray()
+    const ec2t = dbTopics.find((t) => t.topicId === 'ec2')
+    // local ec2 kept as-is
+    expect(ec2t?.name).toBe('EC2 Local')
+    expect(ec2t?.rawScore).toBe(99)
+    // s3 inserted from backup
+    expect(dbTopics.some((t) => t.topicId === 's3')).toBe(true)
+  })
 })
