@@ -10,14 +10,16 @@ import { db } from '@/db/db'
 import LibraryView from '@/views/LibraryView.vue'
 
 function mockFileReader(content: string) {
-  const mockReader: Partial<FileReader> & { readAsText: () => void } = {
-    onload: null,
+  const mockReader = {
+    onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => unknown) | null,
     onerror: null,
     result: content,
     readAsText() {
-      const handler = (this as unknown as FileReader).onload
-      if (handler) {
-        handler.call(this, { target: { result: content } } as unknown as ProgressEvent<FileReader>)
+      if (this.onload) {
+        this.onload.call(
+          this as unknown as FileReader,
+          { target: { result: content } } as unknown as ProgressEvent<FileReader>,
+        )
       }
     },
   }
@@ -100,7 +102,7 @@ describe('LibraryView — JSON file upload zone', () => {
   })
 
   it('upload zone renders above the textarea in the JSON tab', async () => {
-    const wrapper = mountLibraryView()
+    mountLibraryView()
     await flushPromises()
 
     const importBtn = [...document.querySelectorAll('button')].find(
@@ -123,7 +125,7 @@ describe('LibraryView — JSON file upload zone', () => {
     const content = JSON.stringify([validQuestion])
     mockFileReader(content)
 
-    const wrapper = mountLibraryView()
+    mountLibraryView()
     await flushPromises()
 
     const importBtn = [...document.querySelectorAll('button')].find(
@@ -147,6 +149,27 @@ describe('LibraryView — JSON file upload zone', () => {
     // preview result should be shown automatically
     const previewEl = document.querySelector('.import-dialog__preview')
     expect(previewEl).not.toBeNull()
+  })
+
+  it('uploading a non-JSON file shows inline error inside the upload zone', async () => {
+    mountLibraryView()
+    await flushPromises()
+
+    const importBtn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Import',
+    )
+    importBtn!.click()
+    await flushPromises()
+
+    const fileInput = document.querySelector('input[type="file"][accept=".json"]') as HTMLInputElement
+    const file = new File(['some csv content'], 'data.csv', { type: 'text/csv' })
+    Object.defineProperty(fileInput, 'files', { value: [file] })
+    fileInput.dispatchEvent(new Event('change'))
+    await flushPromises()
+
+    const errorEl = document.querySelector('[data-testid="json-file-error"]')
+    expect(errorEl).not.toBeNull()
+    expect(errorEl!.textContent).toContain('.json')
   })
 })
 
