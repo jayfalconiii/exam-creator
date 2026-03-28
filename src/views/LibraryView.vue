@@ -218,14 +218,18 @@
                 type="button"
                 data-testid="scope-questions"
                 @click="backupScope = 'questions'"
-              >Questions only</button>
+              >
+                Questions only
+              </button>
               <button
                 class="import-dialog__selector-btn"
                 :class="{ 'import-dialog__selector-btn--active': backupScope === 'questions-and-scores' }"
                 type="button"
                 data-testid="scope-questions-and-scores"
                 @click="backupScope = 'questions-and-scores'"
-              >Questions + scores</button>
+              >
+                Questions + scores
+              </button>
             </div>
           </div>
 
@@ -238,14 +242,18 @@
                 type="button"
                 data-testid="strategy-merge"
                 @click="backupStrategy = 'merge'"
-              >Merge</button>
+              >
+                Merge
+              </button>
               <button
                 class="import-dialog__selector-btn"
                 :class="{ 'import-dialog__selector-btn--active': backupStrategy === 'replace' }"
                 type="button"
                 data-testid="strategy-replace"
                 @click="backupStrategy = 'replace'"
-              >Replace</button>
+              >
+                Replace
+              </button>
             </div>
           </div>
 
